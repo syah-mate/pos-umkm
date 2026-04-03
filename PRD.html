@@ -1,0 +1,1341 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PRD — Sistem POS UMKM Indonesia v1.1</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap');
+
+  :root {
+    --blue-dark:   #1F4E79;
+    --blue-mid:    #2E75B6;
+    --blue-light:  #D6E4F0;
+    --blue-pale:   #EBF4FB;
+    --accent:      #0EA5E9;
+    --green:       #16A34A;
+    --amber:       #D97706;
+    --red:         #DC2626;
+    --gray-50:     #F8FAFC;
+    --gray-100:    #F1F5F9;
+    --gray-200:    #E2E8F0;
+    --gray-400:    #94A3B8;
+    --gray-600:    #475569;
+    --gray-800:    #1E293B;
+    --gray-900:    #0F172A;
+    --white:       #FFFFFF;
+    --font-sans:   'IBM Plex Sans', system-ui, sans-serif;
+    --font-mono:   'IBM Plex Mono', monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--gray-800);
+    background: var(--gray-50);
+  }
+
+  /* ── LAYOUT ── */
+  .sidebar {
+    position: fixed; top: 0; left: 0;
+    width: 260px; height: 100vh;
+    background: var(--gray-900);
+    overflow-y: auto; overflow-x: hidden;
+    padding: 24px 0 40px;
+    z-index: 100;
+    border-right: 1px solid #1e3a5f;
+  }
+  .sidebar-logo {
+    padding: 0 20px 20px;
+    border-bottom: 1px solid #1e3a5f;
+    margin-bottom: 16px;
+  }
+  .sidebar-logo .badge {
+    display: inline-block;
+    background: var(--blue-mid);
+    color: white;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 3px;
+    letter-spacing: 0.08em;
+    margin-bottom: 6px;
+  }
+  .sidebar-logo h1 {
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+  .sidebar-logo p {
+    color: var(--gray-400);
+    font-size: 11px;
+    margin-top: 2px;
+    font-family: var(--font-mono);
+  }
+  .nav-section {
+    padding: 0 12px;
+    margin-bottom: 8px;
+  }
+  .nav-section-label {
+    color: var(--gray-400);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 0 8px;
+    margin-bottom: 4px;
+  }
+  .nav-section a {
+    display: block;
+    color: #94A3B8;
+    text-decoration: none;
+    font-size: 12.5px;
+    padding: 5px 8px;
+    border-radius: 5px;
+    transition: all 0.15s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .nav-section a:hover { background: #1e3a5f; color: white; }
+  .nav-section a.active { background: var(--blue-mid); color: white; }
+
+  .main {
+    margin-left: 260px;
+    min-height: 100vh;
+  }
+
+  /* ── COVER ── */
+  .cover {
+    background: linear-gradient(135deg, var(--blue-dark) 0%, #0d2d4f 50%, #071a2e 100%);
+    padding: 80px 64px 64px;
+    position: relative;
+    overflow: hidden;
+  }
+  .cover::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%232E75B6' fill-opacity='0.08'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    opacity: 0.4;
+  }
+  .cover-inner { position: relative; max-width: 860px; }
+  .cover-tag {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(46,117,182,0.3);
+    border: 1px solid rgba(46,117,182,0.5);
+    color: #7EC8F0;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 5px 14px;
+    border-radius: 20px;
+    margin-bottom: 24px;
+  }
+  .cover-tag::before { content: '◆'; font-size: 8px; }
+  .cover h1 {
+    font-size: clamp(28px, 4vw, 46px);
+    font-weight: 700;
+    color: white;
+    line-height: 1.15;
+    margin-bottom: 12px;
+    letter-spacing: -0.02em;
+  }
+  .cover h1 span { color: #7EC8F0; }
+  .cover-subtitle {
+    font-size: 18px;
+    color: #93C5DB;
+    font-weight: 300;
+    margin-bottom: 40px;
+    max-width: 600px;
+  }
+  .cover-meta {
+    display: flex; flex-wrap: wrap; gap: 32px;
+  }
+  .cover-meta-item label {
+    display: block;
+    font-size: 10px;
+    font-family: var(--font-mono);
+    color: var(--gray-400);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+  .cover-meta-item span {
+    font-size: 14px;
+    color: white;
+    font-weight: 500;
+  }
+  .cover-refs {
+    margin-top: 36px;
+    padding-top: 24px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    font-size: 12px;
+    color: var(--gray-400);
+    font-family: var(--font-mono);
+  }
+  .cover-refs strong { color: #7EC8F0; }
+
+  /* ── CONTENT AREA ── */
+  .content { padding: 48px 64px 80px; max-width: 960px; }
+
+  /* ── SECTIONS ── */
+  .section { margin-bottom: 56px; }
+
+  .section-banner {
+    background: var(--blue-dark);
+    color: white;
+    padding: 14px 24px;
+    border-radius: 8px 8px 0 0;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-family: var(--font-mono);
+    margin-bottom: 0;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .section-banner::before {
+    content: attr(data-num);
+    background: rgba(255,255,255,0.15);
+    border-radius: 4px;
+    padding: 1px 7px;
+    font-size: 11px;
+  }
+  .section-body {
+    border: 1px solid var(--gray-200);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    padding: 32px;
+    background: white;
+  }
+
+  h2 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--blue-dark);
+    margin: 28px 0 10px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid var(--blue-light);
+  }
+  h2:first-child { margin-top: 0; }
+
+  h3 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--gray-800);
+    margin: 20px 0 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-family: var(--font-mono);
+  }
+
+  p { margin-bottom: 10px; color: var(--gray-600); font-size: 14px; }
+
+  /* ── LISTS ── */
+  ul.feat-list { list-style: none; padding: 0; margin: 0 0 12px; }
+  ul.feat-list li {
+    display: flex; gap: 10px;
+    padding: 6px 0;
+    font-size: 14px;
+    color: var(--gray-600);
+    border-bottom: 1px solid var(--gray-100);
+  }
+  ul.feat-list li:last-child { border-bottom: none; }
+  ul.feat-list li::before {
+    content: '→';
+    color: var(--blue-mid);
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  ul.feat-list li strong { color: var(--gray-800); }
+
+  ol.steps { padding-left: 0; list-style: none; margin: 0 0 12px; counter-reset: steps; }
+  ol.steps li {
+    counter-increment: steps;
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 7px 0;
+    font-size: 14px;
+    color: var(--gray-600);
+    border-bottom: 1px solid var(--gray-100);
+  }
+  ol.steps li:last-child { border-bottom: none; }
+  ol.steps li::before {
+    content: counter(steps);
+    background: var(--blue-mid);
+    color: white;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  /* ── TABLES ── */
+  .table-wrap { overflow-x: auto; margin: 12px 0 20px; border-radius: 8px; border: 1px solid var(--gray-200); }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  thead tr { background: var(--blue-dark); }
+  thead th {
+    color: white;
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+  tbody tr:nth-child(even) { background: var(--blue-pale); }
+  tbody tr:nth-child(odd) { background: white; }
+  tbody tr:hover { background: var(--blue-light); transition: background 0.1s; }
+  tbody td {
+    padding: 9px 14px;
+    color: var(--gray-600);
+    border-bottom: 1px solid var(--gray-100);
+    vertical-align: top;
+    line-height: 1.5;
+  }
+  tbody td:first-child { color: var(--gray-800); font-weight: 600; }
+  tbody tr:last-child td { border-bottom: none; }
+
+  /* Priority badges */
+  .badge-high   { display:inline-block; background:#FEE2E2; color:#DC2626; font-size:11px; font-weight:700; padding:2px 8px; border-radius:4px; font-family:var(--font-mono); }
+  .badge-medium { display:inline-block; background:#FEF3C7; color:#D97706; font-size:11px; font-weight:700; padding:2px 8px; border-radius:4px; font-family:var(--font-mono); }
+  .badge-low    { display:inline-block; background:#DCFCE7; color:#16A34A; font-size:11px; font-weight:700; padding:2px 8px; border-radius:4px; font-family:var(--font-mono); }
+
+  /* ── INFO BOX ── */
+  .info-box {
+    background: var(--blue-pale);
+    border-left: 4px solid var(--blue-mid);
+    border-radius: 0 8px 8px 0;
+    padding: 16px 20px;
+    margin: 12px 0 20px;
+    font-size: 14px;
+    color: var(--gray-600);
+  }
+  .info-box strong { color: var(--blue-dark); }
+
+  .warn-box {
+    background: #FFFBEB;
+    border-left: 4px solid var(--amber);
+    border-radius: 0 8px 8px 0;
+    padding: 16px 20px;
+    margin: 12px 0 20px;
+    font-size: 14px;
+    color: var(--gray-600);
+  }
+
+  /* ── FEATURE CARD GRID ── */
+  .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 12px;
+    margin: 16px 0;
+  }
+  .feature-card {
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    padding: 16px;
+    transition: box-shadow 0.15s, border-color 0.15s;
+  }
+  .feature-card:hover { border-color: var(--blue-mid); box-shadow: 0 4px 12px rgba(46,117,182,0.12); }
+  .feature-card .fc-id {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--blue-mid);
+    margin-bottom: 4px;
+  }
+  .feature-card .fc-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--gray-800);
+    margin-bottom: 6px;
+  }
+  .feature-card .fc-desc {
+    font-size: 12.5px;
+    color: var(--gray-400);
+    line-height: 1.5;
+    margin-bottom: 10px;
+  }
+
+  /* ── CODE / SCHEMA ── */
+  .schema-block {
+    background: var(--gray-900);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin: 12px 0 20px;
+    overflow-x: auto;
+  }
+  .schema-block pre {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    color: #E2E8F0;
+    line-height: 1.65;
+    white-space: pre;
+  }
+  .schema-block .key   { color: #7EC8F0; }
+  .schema-block .type  { color: #C4B5FD; }
+  .schema-block .cmt   { color: #64748B; font-style: italic; }
+  .schema-block .str   { color: #86EFAC; }
+
+  /* ── CALC BOX ── */
+  .calc-box {
+    background: var(--gray-900);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin: 12px 0;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: #E2E8F0;
+    line-height: 1.8;
+  }
+  .calc-box .calc-label { color: var(--gray-400); }
+  .calc-box .calc-val   { color: #7EC8F0; font-weight: 600; }
+  .calc-box .calc-result { color: #86EFAC; font-weight: 700; font-size: 14px; border-top: 1px solid #1e3a5f; margin-top: 8px; padding-top: 8px; }
+
+  /* ── DIVIDER ── */
+  hr { border: none; border-top: 1px solid var(--gray-200); margin: 28px 0; }
+
+  /* ── PHASE BLOCK ── */
+  .phase-block {
+    border: 1px solid var(--gray-200);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .phase-header {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 20px;
+    background: var(--gray-100);
+    border-bottom: 1px solid var(--gray-200);
+  }
+  .phase-num {
+    background: var(--blue-dark); color: white;
+    font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+    padding: 3px 10px; border-radius: 4px;
+    white-space: nowrap;
+  }
+  .phase-title { font-weight: 700; font-size: 15px; color: var(--gray-800); }
+  .phase-period { font-size: 12px; color: var(--gray-400); font-family: var(--font-mono); margin-left: auto; }
+  .phase-body { padding: 16px 20px; }
+
+  /* ── FOOTER ── */
+  .doc-footer {
+    background: var(--gray-900);
+    color: var(--gray-400);
+    text-align: center;
+    padding: 32px;
+    font-size: 12px;
+    font-family: var(--font-mono);
+    line-height: 1.8;
+  }
+  .doc-footer strong { color: var(--gray-200); }
+
+  /* ── PRINT / AI reading ── */
+  @media print {
+    .sidebar { display: none; }
+    .main { margin-left: 0; }
+    .cover { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+
+  /* ── SCROLLBAR ── */
+  .sidebar::-webkit-scrollbar { width: 4px; }
+  .sidebar::-webkit-scrollbar-track { background: transparent; }
+  .sidebar::-webkit-scrollbar-thumb { background: #1e3a5f; border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ SIDEBAR NAV ═══════════════ -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="badge">PRD v1.1</div>
+    <h1>Sistem POS UMKM<br>Indonesia</h1>
+    <p>April 2026</p>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Dokumen</div>
+    <a href="#cover">Cover & Metadata</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Isi PRD</div>
+    <a href="#s1">1. Ringkasan Eksekutif</a>
+    <a href="#s2">2. Stakeholder & Persona</a>
+    <a href="#s3">3. Feature Overview</a>
+    <a href="#s4">4. Detail Spesifikasi</a>
+    <a href="#s5">5. User Stories</a>
+    <a href="#s6">6. Non-Functional Req.</a>
+    <a href="#s7">7. Release Roadmap</a>
+    <a href="#s8">8. Acceptance Criteria</a>
+    <a href="#s9">9. Risiko & Mitigasi</a>
+    <a href="#s10">10. Glosarium</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Fitur</div>
+    <a href="#f01">F-01 Transaksi Kasir</a>
+    <a href="#f02">F-02 Manajemen Produk</a>
+    <a href="#f03">F-03 Inventori & Stok</a>
+    <a href="#f04">F-04 Pelanggan & CRM</a>
+    <a href="#f05">F-05 Karyawan & Shift</a>
+    <a href="#f06">F-06 Laporan & Analitik</a>
+    <a href="#f07">F-07 Manajemen Meja</a>
+    <a href="#f08">F-08 Order Online</a>
+    <a href="#f09">F-09 Payment Gateway</a>
+    <a href="#f10">F-10 Akuntansi & Pajak</a>
+    <a href="#f11">F-11 Multi-Outlet</a>
+    <a href="#f15">F-15 Recipe & BOM ★</a>
+  </div>
+</nav>
+
+<!-- ═══════════════ MAIN ═══════════════ -->
+<main class="main">
+
+  <!-- COVER -->
+  <div class="cover" id="cover">
+    <div class="cover-inner">
+      <div class="cover-tag">Product Requirements Document</div>
+      <h1>Sistem <span>Point of Sale</span><br>untuk UMKM Indonesia</h1>
+      <p class="cover-subtitle">Spesifikasi produk lengkap untuk membangun sistem kasir berbasis cloud yang komprehensif, mudah digunakan, dan terjangkau untuk segmen UMKM Indonesia.</p>
+      <div class="cover-meta">
+        <div class="cover-meta-item"><label>Versi</label><span>1.1</span></div>
+        <div class="cover-meta-item"><label>Tanggal</label><span>April 2026</span></div>
+        <div class="cover-meta-item"><label>Status</label><span>Draft — For Review</span></div>
+        <div class="cover-meta-item"><label>Platform</label><span>Web SaaS + Mobile App</span></div>
+        <div class="cover-meta-item"><label>Stack</label><span>Next.js · MongoDB · Tailwind</span></div>
+      </div>
+      <div class="cover-refs">
+        <strong>Referensi kompetitor:</strong> majoo.id · mokapos.com · iREAP POS · Pawoon · Kasir Pintar · Toast POS · Lightspeed · Square for Restaurants
+      </div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ═══ SECTION 1: RINGKASAN EKSEKUTIF ═══ -->
+    <div class="section" id="s1">
+      <div class="section-banner" data-num="01">Ringkasan Eksekutif</div>
+      <div class="section-body">
+
+        <h2>1.1 Latar Belakang</h2>
+        <p>Indonesia memiliki lebih dari <strong>65 juta unit UMKM</strong> yang menjadi tulang punggung perekonomian nasional, menyumbang lebih dari 60% PDB. Namun mayoritas UMKM masih mengelola transaksi penjualan secara manual menggunakan buku catatan atau aplikasi sederhana yang tidak terintegrasi.</p>
+        <p>Permasalahan utama yang dihadapi UMKM dalam pengelolaan transaksi meliputi: pencatatan stok yang tidak akurat, kesulitan monitoring laporan keuangan real-time, ketidakmampuan mengelola multiple outlet, serta minimnya data untuk pengambilan keputusan bisnis.</p>
+
+        <h2>1.2 Tujuan Produk</h2>
+        <p>Membangun sistem Point of Sale (POS) berbasis cloud yang komprehensif, mudah digunakan, dan terjangkau untuk segmen UMKM Indonesia — mulai dari warung makan, toko retail, salon, hingga minimarket.</p>
+        <ul class="feat-list">
+          <li>Memproses transaksi penjualan secara cepat dan akurat</li>
+          <li>Mengelola inventori dan stok barang secara real-time</li>
+          <li>Menyajikan laporan keuangan dan analitik bisnis</li>
+          <li>Mendukung operasional multi-outlet dari satu dashboard</li>
+          <li>Terintegrasi dengan payment gateway, marketplace, dan e-invoice</li>
+        </ul>
+
+        <h2>1.3 Scope Produk</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Atribut</th><th>Keterangan</th></tr></thead>
+            <tbody>
+              <tr><td>Nama Produk</td><td>Sistem POS UMKM (nama sementara)</td></tr>
+              <tr><td>Target Pengguna</td><td>UMKM Indonesia — F&B, Retail, Jasa, Kecantikan</td></tr>
+              <tr><td>Platform</td><td>Web App (SaaS) + Mobile App (Android/iOS)</td></tr>
+              <tr><td>Model Bisnis</td><td>Subscription bulanan/tahunan (Freemium + Pro + Enterprise)</td></tr>
+              <tr><td>Bahasa</td><td>Bahasa Indonesia (utama), English (opsional)</td></tr>
+              <tr><td>Integrasi Utama</td><td>Payment Gateway, Marketplace, e-Faktur Pajak, WhatsApp</td></tr>
+              <tr><td>Tech Stack</td><td>Next.js · MongoDB · Tailwind CSS · Node.js</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SECTION 2: STAKEHOLDER ═══ -->
+    <div class="section" id="s2">
+      <div class="section-banner" data-num="02">Stakeholder &amp; User Persona</div>
+      <div class="section-body">
+
+        <h2>2.1 Stakeholder</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Stakeholder</th><th>Peran</th><th>Prioritas</th></tr></thead>
+            <tbody>
+              <tr><td>Pemilik UMKM</td><td>Pengguna utama, memantau performa bisnis dari aplikasi owner</td><td><span class="badge-high">High</span></td></tr>
+              <tr><td>Kasir / Staff</td><td>Operator transaksi harian di aplikasi kasir</td><td><span class="badge-high">High</span></td></tr>
+              <tr><td>Manager Outlet</td><td>Mengelola stok, karyawan, dan laporan per outlet</td><td><span class="badge-medium">Medium</span></td></tr>
+              <tr><td>Akuntan</td><td>Akses laporan keuangan dan ekspor data untuk pajak</td><td><span class="badge-medium">Medium</span></td></tr>
+              <tr><td>Tim IT Internal</td><td>Konfigurasi sistem, integrasi hardware & API</td><td><span class="badge-low">Low</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2>2.2 User Persona</h2>
+
+        <h3>Persona 1 — Pemilik Warung Makan (F&B)</h3>
+        <div class="info-box"><strong>Pak Budi · 42 tahun · Surabaya</strong></div>
+        <ul class="feat-list">
+          <li>Membuka warung makan dengan 2 gerai, omzet Rp 15–30 juta/bulan</li>
+          <li>Masalah: sering ada selisih antara stok bahan baku dan penjualan aktual</li>
+          <li>Kebutuhan: kasir cepat, manajemen resep/bahan baku, laporan laba-rugi sederhana</li>
+          <li>Device: Android tablet + smartphone</li>
+        </ul>
+
+        <h3>Persona 2 — Pemilik Toko Retail</h3>
+        <div class="info-box"><strong>Ibu Sari · 35 tahun · Bandung</strong></div>
+        <ul class="feat-list">
+          <li>Mengelola toko pakaian dengan 1 outlet offline + 1 toko online (Tokopedia)</li>
+          <li>Masalah: stok tidak sinkron antara online dan offline, sering overselling</li>
+          <li>Kebutuhan: barcode scanner, manajemen stok multi-channel, integrasi marketplace</li>
+          <li>Device: Android + Windows PC</li>
+        </ul>
+
+        <h3>Persona 3 — Kasir</h3>
+        <div class="info-box"><strong>Dina · 22 tahun · Lulusan SMK</strong></div>
+        <ul class="feat-list">
+          <li>Bertugas melayani transaksi pelanggan sehari-hari</li>
+          <li>Kebutuhan: antarmuka simple, cepat, tidak perlu training panjang</li>
+          <li>Khawatir: aplikasi lambat atau error saat jam ramai</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ═══ SECTION 3: FEATURE OVERVIEW ═══ -->
+    <div class="section" id="s3">
+      <div class="section-banner" data-num="03">Feature Overview — Daftar Fitur Lengkap</div>
+      <div class="section-body">
+        <h2>3.1 Kategori Fitur Utama</h2>
+        <div class="feature-grid">
+          <div class="feature-card"><div class="fc-id">F-01</div><div class="fc-name">Transaksi Kasir</div><div class="fc-desc">Pemrosesan penjualan, keranjang belanja, split payment, diskon</div><span class="badge-high">High</span></div>
+          <div class="feature-card"><div class="fc-id">F-02</div><div class="fc-name">Manajemen Produk</div><div class="fc-desc">CRUD produk, kategori, varian, barcode, harga bertingkat</div><span class="badge-high">High</span></div>
+          <div class="feature-card"><div class="fc-id">F-03</div><div class="fc-name">Manajemen Inventori</div><div class="fc-desc">Stok real-time, purchase order, stock opname, alert minimum</div><span class="badge-high">High</span></div>
+          <div class="feature-card"><div class="fc-id">F-04</div><div class="fc-name">Manajemen Pelanggan</div><div class="fc-desc">Database pelanggan, loyalty points, riwayat transaksi, CRM</div><span class="badge-high">High</span></div>
+          <div class="feature-card"><div class="fc-id">F-05</div><div class="fc-name">Manajemen Karyawan</div><div class="fc-desc">Shift, absensi, komisi, hak akses per role</div><span class="badge-medium">Medium</span></div>
+          <div class="feature-card"><div class="fc-id">F-06</div><div class="fc-name">Laporan &amp; Analitik</div><div class="fc-desc">Laporan penjualan, laba-rugi, produk terlaris, dashboard</div><span class="badge-high">High</span></div>
+          <div class="feature-card"><div class="fc-id">F-07</div><div class="fc-name">Manajemen Meja F&amp;B</div><div class="fc-desc">Denah meja, pemisahan bill, order per meja, QR code order</div><span class="badge-medium">Medium</span></div>
+          <div class="feature-card"><div class="fc-id">F-08</div><div class="fc-name">Order Online</div><div class="fc-desc">Integrasi GrabFood, GoFood, ShopeeFood, order link sendiri</div><span class="badge-medium">Medium</span></div>
+          <div class="feature-card"><div class="fc-id">F-09</div><div class="fc-name">Payment Gateway</div><div class="fc-desc">QRIS, kartu debit/kredit, e-wallet, bayar nanti (paylater)</div><span class="badge-high">High</span></div>
+          <div class="feature-card"><div class="fc-id">F-10</div><div class="fc-name">Akuntansi &amp; Pajak</div><div class="fc-desc">Jurnal otomatis, laporan keuangan, integrasi e-Faktur</div><span class="badge-medium">Medium</span></div>
+          <div class="feature-card"><div class="fc-id">F-11</div><div class="fc-name">Multi-Outlet</div><div class="fc-desc">Manajemen beberapa cabang dari satu akun owner</div><span class="badge-medium">Medium</span></div>
+          <div class="feature-card"><div class="fc-id">F-12</div><div class="fc-name">Aplikasi Owner</div><div class="fc-desc">Dashboard ringkas khusus pemilik, bisa akses dari HP</div><span class="badge-high">High</span></div>
+          <div class="feature-card"><div class="fc-id">F-13</div><div class="fc-name">Hardware Integration</div><div class="fc-desc">Printer struk, barcode scanner, cash drawer, display pelanggan</div><span class="badge-medium">Medium</span></div>
+          <div class="feature-card"><div class="fc-id">F-14</div><div class="fc-name">Notifikasi &amp; Alert</div><div class="fc-desc">WhatsApp/email notif stok habis, laporan harian, anomali</div><span class="badge-low">Low</span></div>
+          <div class="feature-card" style="border-color:var(--blue-mid);background:var(--blue-pale)"><div class="fc-id">F-15 ★</div><div class="fc-name">Recipe &amp; BOM Management</div><div class="fc-desc">Resep menu, kalkulasi HPP otomatis, potong stok per bahan baku, sub-resep, yield factor, batch production</div><span class="badge-high">High</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SECTION 4: DETAIL FITUR ═══ -->
+    <div class="section" id="s4">
+      <div class="section-banner" data-num="04">Detail Spesifikasi Fitur</div>
+      <div class="section-body">
+
+        <!-- F-01 -->
+        <h2 id="f01">F-01: Modul Transaksi Kasir</h2>
+        <p>Modul inti yang memungkinkan kasir memproses transaksi penjualan secara cepat. Dirancang untuk interface yang intuitif dengan kemampuan operasi minimal 3 kali tap untuk menyelesaikan satu transaksi.</p>
+        <h3>Sub-Fitur</h3>
+        <ul class="feat-list">
+          <li><strong>Pencarian produk:</strong> Cari berdasarkan nama, SKU, atau scan barcode</li>
+          <li><strong>Keranjang belanja:</strong> Tambah/hapus item, ubah qty, input diskon per item</li>
+          <li><strong>Diskon &amp; Promo:</strong> Diskon nominal, persen, buy-1-get-1, promo bundling</li>
+          <li><strong>Split Payment:</strong> Kombinasi tunai + QRIS + e-wallet dalam satu transaksi</li>
+          <li><strong>Refund &amp; Return:</strong> Proses pengembalian barang dengan update stok otomatis</li>
+          <li><strong>Struk Digital:</strong> Kirim struk via WhatsApp / email ke pelanggan</li>
+          <li><strong>Offline Mode:</strong> Transaksi tetap berjalan saat internet mati, sinkron saat online</li>
+          <li><strong>Hold Order:</strong> Tahan pesanan, layani pelanggan lain, kembali ke pesanan semula</li>
+        </ul>
+        <h3>Alur Kerja</h3>
+        <ol class="steps">
+          <li>Kasir membuka sesi (shift) — input saldo awal kas</li>
+          <li>Kasir mencari/scan produk → item masuk keranjang</li>
+          <li>Input jumlah, pilih varian (jika ada)</li>
+          <li>Terapkan diskon/promo (opsional)</li>
+          <li>Pilih metode pembayaran → konfirmasi total</li>
+          <li>Sistem cetak/kirim struk → stok berkurang otomatis</li>
+          <li>Kasir tutup sesi → laporan sesi dihasilkan otomatis</li>
+        </ol>
+        <h3>Business Rules</h3>
+        <ul class="feat-list">
+          <li>Transaksi tidak dapat diproses jika sesi kasir belum dibuka</li>
+          <li>Diskon melebihi batas yang dikonfigurasi owner harus mendapat approval supervisor</li>
+          <li>Pembatalan transaksi yang sudah selesai hanya bisa dilakukan oleh role Manager ke atas</li>
+          <li>Offline mode menyimpan data lokal maksimal 72 jam sebelum force-sync</li>
+        </ul>
+        <hr>
+
+        <!-- F-02 -->
+        <h2 id="f02">F-02: Manajemen Produk &amp; Katalog</h2>
+        <p>Modul untuk mendefinisikan dan mengelola seluruh produk yang dijual. Mendukung produk sederhana hingga produk kompleks dengan varian (ukuran, warna, rasa) dan modifier (topping, add-on).</p>
+        <h3>Sub-Fitur</h3>
+        <ul class="feat-list">
+          <li><strong>CRUD Produk:</strong> Nama, deskripsi, foto, harga jual, harga beli, kategori, SKU</li>
+          <li><strong>Varian Produk:</strong> Ukuran (S/M/L), warna, rasa — masing-masing dengan harga berbeda</li>
+          <li><strong>Modifier / Add-on:</strong> Khusus F&B — topping, level gula, suhu, dll.</li>
+          <li><strong>Kategori &amp; Sub-kategori:</strong> Hierarki kategori untuk filter di kasir</li>
+          <li><strong>Harga Bertingkat:</strong> Harga grosir vs eceran, harga per segmen pelanggan</li>
+          <li><strong>Barcode Generator:</strong> Generate &amp; print barcode/QR label untuk produk</li>
+          <li><strong>Import/Export:</strong> Upload produk massal via file Excel/CSV</li>
+          <li><strong>Produk Komposit:</strong> Produk terdiri dari beberapa komponen — lihat F-15 untuk detail</li>
+        </ul>
+        <hr>
+
+        <!-- F-03 -->
+        <h2 id="f03">F-03: Manajemen Inventori &amp; Stok</h2>
+        <p>Sistem manajemen stok real-time yang memastikan ketersediaan barang selalu akurat. Setiap transaksi penjualan, pembelian, atau retur secara otomatis memperbarui angka stok.</p>
+        <h3>Sub-Fitur</h3>
+        <ul class="feat-list">
+          <li><strong>Stok Real-time:</strong> Jumlah stok diperbarui seketika setiap ada transaksi</li>
+          <li><strong>Purchase Order (PO):</strong> Buat PO ke supplier, tracking status pengiriman, penerimaan barang</li>
+          <li><strong>Stock Opname:</strong> Hitung fisik stok, bandingkan dengan sistem, catat selisih</li>
+          <li><strong>Transfer Stok:</strong> Pindah stok antar outlet/gudang dengan approval flow</li>
+          <li><strong>Alert Stok Minimum:</strong> Notifikasi otomatis saat stok mencapai batas minimum</li>
+          <li><strong>Riwayat Mutasi:</strong> Log lengkap setiap perubahan stok (masuk/keluar/penyesuaian)</li>
+          <li><strong>Manajemen Supplier:</strong> Database supplier, harga beli, lead time pengiriman</li>
+          <li><strong>Batch &amp; Expiry:</strong> Tracking nomor batch dan tanggal kadaluarsa (untuk farmasi/FnB)</li>
+        </ul>
+        <h3>Alur Kerja Purchase Order</h3>
+        <ol class="steps">
+          <li>Manager buat Purchase Order → pilih supplier, item, dan jumlah</li>
+          <li>PO dikirim ke supplier (via email/cetak)</li>
+          <li>Saat barang datang → Penerimaan Barang: verifikasi qty aktual vs PO</li>
+          <li>Stok bertambah otomatis sesuai qty diterima</li>
+          <li>Selisih dicatat sebagai hutang atau adjustment</li>
+        </ol>
+        <hr>
+
+        <!-- F-04 -->
+        <h2 id="f04">F-04: Manajemen Pelanggan &amp; Loyalty</h2>
+        <p>Modul CRM sederhana untuk UMKM. Memungkinkan pemilik mengenal pelanggan setia, memberikan reward, dan menjalankan program loyalitas untuk meningkatkan repeat order.</p>
+        <h3>Sub-Fitur</h3>
+        <ul class="feat-list">
+          <li><strong>Database Pelanggan:</strong> Nama, no. HP, email, tanggal lahir, alamat</li>
+          <li><strong>Riwayat Transaksi:</strong> Semua pembelian pelanggan tersimpan dan bisa dilihat per customer</li>
+          <li><strong>Loyalty Points:</strong> Konfigurasi poin per kelipatan transaksi, tukar poin dengan diskon</li>
+          <li><strong>Membership Level:</strong> Bronze/Silver/Gold berdasarkan akumulasi spending</li>
+          <li><strong>Birthday Promo:</strong> Voucher otomatis dikirim ke pelanggan di hari ulang tahun</li>
+          <li><strong>Segmentasi:</strong> Filter pelanggan berdasarkan frekuensi beli, total belanja, produk favorit</li>
+          <li><strong>Broadcast Pesan:</strong> Kirim promo via WhatsApp ke segmen pelanggan tertentu</li>
+        </ul>
+        <hr>
+
+        <!-- F-05 -->
+        <h2 id="f05">F-05: Manajemen Karyawan &amp; Shift</h2>
+        <ul class="feat-list">
+          <li><strong>Manajemen Role:</strong> Owner, Manager, Kasir, Staff — permission berbeda per role</li>
+          <li><strong>Shift Management:</strong> Jadwal shift, buka/tutup shift, saldo kas per shift</li>
+          <li><strong>Absensi:</strong> Clock-in/out berbasis PIN atau GPS (untuk multi-outlet)</li>
+          <li><strong>Komisi Penjualan:</strong> Hitung komisi otomatis berdasarkan omzet atau item terjual</li>
+          <li><strong>Log Aktivitas:</strong> Rekam semua aksi karyawan di sistem untuk audit trail</li>
+          <li><strong>Notif Laporan:</strong> Laporan shift dikirim otomatis ke owner via WhatsApp</li>
+        </ul>
+        <hr>
+
+        <!-- F-06 -->
+        <h2 id="f06">F-06: Laporan &amp; Dashboard Analitik</h2>
+        <p>Pusat data bisnis yang menyajikan laporan komprehensif dan visualisasi yang mudah dipahami oleh pemilik UMKM yang tidak memiliki latar belakang akuntansi.</p>
+        <h3>Jenis Laporan</h3>
+        <ul class="feat-list">
+          <li><strong>Laporan Penjualan:</strong> Per hari/minggu/bulan/tahun, per produk, per kategori, per kasir</li>
+          <li><strong>Laporan Keuangan:</strong> Pendapatan, HPP, laba kotor, laba bersih, arus kas</li>
+          <li><strong>Laporan Stok:</strong> Stok saat ini, pergerakan stok, produk low-stock, dead-stock</li>
+          <li><strong>Laporan Pelanggan:</strong> Customer terbanyak, RFM analysis, retention rate</li>
+          <li><strong>Laporan Karyawan:</strong> Performa kasir, total penjualan per staff, absensi</li>
+          <li><strong>Laporan Pajak:</strong> Rekapitulasi PPN, PPh, data untuk e-Faktur</li>
+        </ul>
+        <h3>Dashboard</h3>
+        <ul class="feat-list">
+          <li>Widget ringkas: Total penjualan hari ini, omzet bulan ini, produk terlaris</li>
+          <li>Grafik tren penjualan harian/mingguan</li>
+          <li>Perbandingan periode (bulan ini vs bulan lalu)</li>
+          <li>Alert bisnis: stok mau habis, transaksi anomali, target belum tercapai</li>
+        </ul>
+        <hr>
+
+        <!-- F-07 -->
+        <h2 id="f07">F-07: Manajemen Meja (Khusus F&amp;B)</h2>
+        <ul class="feat-list">
+          <li><strong>Denah Meja Visual:</strong> Drag-and-drop layout denah meja sesuai kondisi restoran aktual</li>
+          <li><strong>Status Meja:</strong> Kosong / Terisi / Reserved / Perlu Dibersihkan — update real-time</li>
+          <li><strong>Order per Meja:</strong> Tambah item ke meja tertentu, edit order sebelum diproses dapur</li>
+          <li><strong>Kitchen Display (KDS):</strong> Pesanan tampil di layar dapur tanpa perlu struk printer</li>
+          <li><strong>Split Bill:</strong> Pisah tagihan antar pelanggan dalam satu meja secara fleksibel</li>
+          <li><strong>Merge Table:</strong> Gabung dua meja menjadi satu tagihan</li>
+          <li><strong>QR Code Order:</strong> Pelanggan scan QR di meja → order mandiri dari HP</li>
+        </ul>
+        <hr>
+
+        <!-- F-08 -->
+        <h2 id="f08">F-08: Integrasi Order Online &amp; Omnichannel</h2>
+        <ul class="feat-list">
+          <li><strong>GoFood / GrabFood / ShopeeFood:</strong> Terima order dari platform ojek online langsung ke POS</li>
+          <li><strong>Online Store Mandiri:</strong> Halaman toko online dengan link yang bisa dishare ke pelanggan</li>
+          <li><strong>WhatsApp Order:</strong> Integrasi WhatsApp Business untuk terima order via chat</li>
+          <li><strong>Marketplace Sync:</strong> Sinkronisasi stok dan pesanan dengan Tokopedia, Shopee, Lazada</li>
+          <li><strong>Aggregator Order:</strong> Semua pesanan online masuk ke satu dashboard terintegrasi</li>
+        </ul>
+        <hr>
+
+        <!-- F-09 -->
+        <h2 id="f09">F-09: Payment Gateway &amp; Metode Pembayaran</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Metode</th><th>Deskripsi</th><th>Prioritas</th></tr></thead>
+            <tbody>
+              <tr><td>Tunai (Cash)</td><td>Hitung kembalian otomatis, nomor uang masuk dicatat</td><td><span class="badge-high">High</span></td></tr>
+              <tr><td>QRIS</td><td>Satu QR code untuk semua e-wallet (GoPay, OVO, DANA, dll.)</td><td><span class="badge-high">High</span></td></tr>
+              <tr><td>Kartu Debit/Kredit</td><td>Integrasi mesin EDC atau payment gateway berbasis API</td><td><span class="badge-high">High</span></td></tr>
+              <tr><td>Transfer Bank</td><td>Konfirmasi manual atau auto via virtual account</td><td><span class="badge-medium">Medium</span></td></tr>
+              <tr><td>E-Wallet</td><td>GoPay, OVO, DANA, ShopeePay secara langsung</td><td><span class="badge-high">High</span></td></tr>
+              <tr><td>Paylater / Cicilan</td><td>GoPay Later, Akulaku, Kredivo (untuk transaksi besar)</td><td><span class="badge-low">Low</span></td></tr>
+              <tr><td>Piutang Pelanggan</td><td>Bayar nanti — catat hutang pelanggan, kirim reminder</td><td><span class="badge-medium">Medium</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <hr>
+
+        <!-- F-10 -->
+        <h2 id="f10">F-10: Modul Akuntansi &amp; Pajak</h2>
+        <ul class="feat-list">
+          <li><strong>Jurnal Otomatis:</strong> Setiap transaksi penjualan/pembelian otomatis membuat jurnal akuntansi</li>
+          <li><strong>Chart of Accounts:</strong> Struktur akun default untuk UMKM, bisa dikustomisasi</li>
+          <li><strong>Laporan Laba-Rugi:</strong> Periode harian hingga tahunan, per outlet atau konsolidasi</li>
+          <li><strong>Neraca / Balance Sheet:</strong> Snapshot posisi keuangan bisnis</li>
+          <li><strong>Arus Kas:</strong> Laporan cash flow — operasional, investasi, pendanaan</li>
+          <li><strong>Integrasi e-Faktur:</strong> Generate faktur pajak digital, ekspor ke format DJP</li>
+          <li><strong>Rekonsiliasi Bank:</strong> Upload mutasi rekening → mapping otomatis ke transaksi</li>
+        </ul>
+        <hr>
+
+        <!-- F-11 -->
+        <h2 id="f11">F-11: Multi-Outlet Management</h2>
+        <ul class="feat-list">
+          <li><strong>Dashboard Konsolidasi:</strong> Lihat performa semua outlet dalam satu layar</li>
+          <li><strong>Setting per Outlet:</strong> Harga, menu, dan promo bisa berbeda antar outlet</li>
+          <li><strong>Transfer Stok:</strong> Kirim stok dari gudang pusat ke outlet cabang</li>
+          <li><strong>Manajemen Karyawan:</strong> Assign karyawan ke outlet tertentu</li>
+          <li><strong>Laporan Terpisah:</strong> Filter laporan per outlet atau gabungan</li>
+        </ul>
+        <hr>
+
+        <!-- F-15 -->
+        <h2 id="f15">F-15: Recipe Management &amp; Bill of Materials (BOM) ★</h2>
+        <div class="warn-box">
+          <strong>⚡ Fitur Kritis untuk F&B.</strong> Modul ini membedakan POS generik dengan POS F&B sesungguhnya. Tanpa Recipe Management, sistem hanya bisa memotong stok "menu jadi" sebagai 1 unit — padahal yang berkurang adalah stok masing-masing bahan baku. Akibatnya: HPP tidak akurat, stok bahan tidak terkontrol, laporan laba fiktif.
+        </div>
+
+        <h3>Referensi Nama Fitur di Kompetitor</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Sistem POS</th><th>Nama Fitur</th></tr></thead>
+            <tbody>
+              <tr><td>Majoo</td><td>Resep Produk</td></tr>
+              <tr><td>MokaPOS</td><td>Recipe Management</td></tr>
+              <tr><td>iREAP POS</td><td>Bill of Materials</td></tr>
+              <tr><td>Pawoon</td><td>Komposisi Produk</td></tr>
+              <tr><td>Kasir Pintar</td><td>Resep / Komposisi</td></tr>
+              <tr><td>Toast POS (US)</td><td>Menu Engineering + Recipe Costing</td></tr>
+              <tr><td>Lightspeed (global)</td><td>Recipe &amp; Ingredient Management</td></tr>
+              <tr><td>Square for Restaurants</td><td>Menu Item Ingredients</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Arsitektur 3 Layer Data</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Layer</th><th>Nama</th><th>Deskripsi</th></tr></thead>
+            <tbody>
+              <tr><td>Layer 1</td><td>Bahan Baku (Raw Material)</td><td>Master data semua bahan mentah/kondimen dengan satuan beli, satuan pakai, harga beli, stok real-time</td></tr>
+              <tr><td>Layer 2</td><td>Resep / BOM</td><td>Definisi komposisi: bahan apa saja + berapa banyak yang dibutuhkan untuk membuat 1 porsi menu</td></tr>
+              <tr><td>Layer 3</td><td>Menu / Produk</td><td>Produk yang dijual di kasir, terhubung ke resep — HPP dihitung otomatis dari Layer 1 &amp; 2</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>A. Master Bahan Baku</h3>
+        <ul class="feat-list">
+          <li><strong>CRUD Bahan Baku:</strong> Nama, kategori (daging, sayuran, bumbu, minuman, kemasan), foto</li>
+          <li><strong>Satuan Ganda:</strong> Satuan beli (kg, liter, karton) berbeda dengan satuan pakai (gram, ml, pcs) — sistem konversi otomatis</li>
+          <li><strong>Harga Beli Multi-Supplier:</strong> Satu bahan bisa punya beberapa supplier dengan harga berbeda, sistem pakai harga aktif terbaru</li>
+          <li><strong>Stok Bahan Real-time:</strong> Jumlah stok selalu terkini, berkurang otomatis setiap ada transaksi penjualan menu</li>
+          <li><strong>Stok Minimum per Bahan:</strong> Alert otomatis saat bahan mendekati habis</li>
+          <li><strong>Yield Factor (Faktor Susut):</strong> Persentase hasil bersih setelah pengolahan — misal ayam mentah 100g → 82g setelah dimasak (yield 82%)</li>
+          <li><strong>Riwayat Harga Beli:</strong> Log perubahan harga beli dari waktu ke waktu untuk analisis tren biaya</li>
+        </ul>
+
+        <h3>B. Recipe Builder</h3>
+        <ul class="feat-list">
+          <li><strong>Tambah Resep ke Menu:</strong> Setiap produk F&B dapat dihubungkan ke satu resep aktif</li>
+          <li><strong>Tambah Bahan ke Resep:</strong> Pilih bahan dari master, input qty penggunaan per 1 porsi</li>
+          <li><strong>Preview HPP Real-time:</strong> Saat bahan ditambah/diubah, total HPP langsung terhitung di layar</li>
+          <li><strong>Target Food Cost %:</strong> Input target food cost → sistem rekomendasi harga jual otomatis</li>
+          <li><strong>Kalkulasi Harga Jual:</strong> Formula: Harga Jual = HPP Total / Food Cost% — bisa disesuaikan manual</li>
+          <li><strong>Catatan Resep:</strong> Instruksi memasak, urutan pengolahan, tips plating untuk standarisasi dapur</li>
+        </ul>
+
+        <h3>C. Sub-Resep (Nested Recipe)</h3>
+        <p>Mendukung resep bertingkat — sebuah komponen dalam resep bisa juga merupakan hasil dari resep lain.</p>
+        <div class="schema-block"><pre><span class="cmt">// Contoh hierarki sub-resep</span>
+Ayam Geprek (1 porsi)
+├── <span class="key">Sub-Resep:</span> Ayam Goreng Crispy
+│   ├── Ayam potong    <span class="str">150g</span>
+│   ├── Tepung terigu  <span class="str">50g</span>
+│   └── Minyak goreng  <span class="str">30ml</span>
+└── <span class="key">Sub-Resep:</span> Sambal Geprek
+    ├── Cabai rawit    <span class="str">10g</span>
+    ├── Bawang putih   <span class="str">3g</span>
+    └── Garam          <span class="str">1g</span></pre></div>
+        <ul class="feat-list">
+          <li><strong>Buat Sub-Resep:</strong> Definisikan resep untuk komponen semi-finished (sambal, kuah, saus, adonan)</li>
+          <li><strong>Gunakan Sub-Resep di Resep Utama:</strong> Sistem otomatis trace ke bahan baku paling dasar untuk potong stok</li>
+          <li><strong>Stok Sub-Resep:</strong> Pilih: potong stok bahan baku langsung (real-time) ATAU produksi batch dulu</li>
+          <li><strong>Hierarki Tidak Terbatas:</strong> Support resep bertingkat, maksimal 5 level untuk performa sistem</li>
+        </ul>
+
+        <h3>D. Yield Factor &amp; Waste Management</h3>
+        <p>Faktor susut adalah selisih antara berat/volume bahan mentah yang dibeli vs yang benar-benar terpakai setelah proses persiapan dan memasak.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Sub-Fitur</th><th>Deskripsi</th><th>Prioritas</th></tr></thead>
+            <tbody>
+              <tr><td>Input Yield % per Bahan</td><td>Contoh: Wortel dikupas → yield 88%, Ayam dibersihkan → yield 75%</td><td><span class="badge-high">High</span></td></tr>
+              <tr><td>Kalkulasi Qty Beli Otomatis</td><td>Sistem hitung qty yang harus dibeli = qty resep / yield factor</td><td><span class="badge-high">High</span></td></tr>
+              <tr><td>Waste Log</td><td>Catat pembuangan bahan (expired, tumpah, salah masak) untuk analisis</td><td><span class="badge-medium">Medium</span></td></tr>
+              <tr><td>Variance Report</td><td>Bandingkan waste teoritis vs aktual — deteksi kehilangan bahan tidak wajar</td><td><span class="badge-medium">Medium</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>E. Batch Production (Produksi Massal)</h3>
+        <p>Untuk restoran yang memasak dalam jumlah besar sekaligus, bukan per transaksi individual.</p>
+        <ul class="feat-list">
+          <li><strong>Buat Batch Production Order:</strong> Pilih sub-resep, input jumlah batch yang diproduksi</li>
+          <li><strong>Potong Stok Bahan Sekaligus:</strong> Sistem kurangi semua bahan baku sesuai resep × jumlah batch</li>
+          <li><strong>Tambah Stok Semi-Finished:</strong> Stok produk hasil produksi bertambah (mis: +50 porsi Sup Ayam Siap Saji)</li>
+          <li><strong>Log Produksi:</strong> Riwayat semua aktivitas produksi dengan timestamp dan operator</li>
+          <li><strong>Estimasi Biaya Batch:</strong> Total HPP bahan yang dipakai dalam satu sesi produksi</li>
+        </ul>
+
+        <h3>F. Mekanisme Pemotongan Stok Otomatis</h3>
+        <p>Setiap kali kasir menjual 1 porsi menu yang memiliki resep, sistem menjalankan proses berikut secara otomatis:</p>
+        <ol class="steps">
+          <li>Kasir input transaksi: misalnya 2 porsi Ayam Goreng Crispy</li>
+          <li>Sistem cek: apakah menu ini punya resep aktif?</li>
+          <li>Sistem ambil daftar bahan dari resep × jumlah porsi (2×)</li>
+          <li>Untuk setiap bahan: stok dikurangi = qty resep × qty porsi × (1 / yield factor)</li>
+          <li>Jika ada sub-resep: sistem trace ke bahan dasar secara rekursif</li>
+          <li>Sistem cek apakah ada bahan yang stok &lt; minimum → kirim alert</li>
+          <li>Semua mutasi stok dicatat di log dengan referensi nomor transaksi</li>
+        </ol>
+
+        <h3>G. HPP Calculator &amp; Food Cost Dashboard</h3>
+        <ul class="feat-list">
+          <li><strong>HPP per Menu:</strong> Tampilkan rincian biaya bahan per menu, otomatis update jika harga beli berubah</li>
+          <li><strong>Food Cost % Aktual:</strong> Hitung food cost aktual berdasarkan penjualan real vs HPP</li>
+          <li><strong>Perbandingan Resep:</strong> Bandingkan HPP antar menu — identifikasi menu yang margin-nya tipis</li>
+          <li><strong>Simulasi Kenaikan Harga:</strong> Jika harga bahan naik X%, HPP menu naik berapa? Harga jual perlu disesuaikan?</li>
+          <li><strong>Menu Engineering Matrix:</strong> Klasifikasi menu ke 4 kuadran: Stars, Plowhorses, Puzzles, Dogs</li>
+        </ul>
+
+        <h3>Contoh Kalkulasi Lengkap — Ayam Goreng Crispy (1 Porsi)</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Bahan Baku</th><th>Qty Resep</th><th>Yield %</th><th>Qty Beli Aktual</th><th>Harga/gram</th><th>HPP Bahan</th></tr></thead>
+            <tbody>
+              <tr><td>Ayam potong</td><td>150 g</td><td>82%</td><td>183 g</td><td>Rp 35/g</td><td>Rp 6.405</td></tr>
+              <tr><td>Tepung terigu</td><td>50 g</td><td>100%</td><td>50 g</td><td>Rp 12/g</td><td>Rp 600</td></tr>
+              <tr><td>Minyak goreng</td><td>30 ml</td><td>100%</td><td>30 ml</td><td>Rp 18/ml</td><td>Rp 540</td></tr>
+              <tr><td>Bawang putih</td><td>5 g</td><td>90%</td><td>5.6 g</td><td>Rp 40/g</td><td>Rp 224</td></tr>
+              <tr><td>Garam</td><td>2 g</td><td>100%</td><td>2 g</td><td>Rp 8/g</td><td>Rp 16</td></tr>
+              <tr><td>Kemasan box</td><td>1 pcs</td><td>100%</td><td>1 pcs</td><td>Rp 500/pcs</td><td>Rp 500</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="calc-box">
+          <div><span class="calc-label">HPP Bahan Baku         : </span><span class="calc-val">Rp 8.285</span></div>
+          <div><span class="calc-label">Overhead (gas+listrik, 15%): </span><span class="calc-val">Rp 1.243</span></div>
+          <div><span class="calc-label">HPP Total per Porsi    : </span><span class="calc-val">Rp 9.528</span></div>
+          <div><span class="calc-label">Target Food Cost %     : </span><span class="calc-val">30%</span></div>
+          <div class="calc-result">Harga Jual Rekomendasi : Rp 9.528 / 0.30 = Rp 31.760 → dibulatkan <span style="color:#7EC8F0">Rp 32.000</span></div>
+          <div class="calc-result">Gross Margin per Porsi : Rp 32.000 − Rp 9.528 = <span style="color:#86EFAC">Rp 22.472 (70.2%)</span></div>
+        </div>
+
+        <h3>Alur Kerja Setup Resep</h3>
+        <ol class="steps">
+          <li>Owner/Manager buka menu: Dapur → Bahan Baku → Tambah Bahan Baku</li>
+          <li>Input semua bahan: nama, satuan beli, satuan pakai, faktor konversi, harga beli, yield %</li>
+          <li>Buka menu: Dapur → Resep → Buat Resep Baru</li>
+          <li>Pilih menu yang ingin ditautkan ke resep ini</li>
+          <li>Tambahkan bahan satu per satu: pilih bahan, input qty per porsi</li>
+          <li>Sistem otomatis hitung HPP dan tampilkan di preview</li>
+          <li>Input target food cost % atau overhead → sistem kalkulasi harga jual saran</li>
+          <li>Simpan resep → menu siap digunakan di kasir dengan stok tracking aktif</li>
+          <li>Setiap kali harga beli bahan berubah → HPP dan harga jual saran otomatis update</li>
+        </ol>
+
+        <h3>Business Rules</h3>
+        <ul class="feat-list">
+          <li>Satu menu hanya boleh memiliki satu resep aktif pada satu waktu</li>
+          <li>Resep yang sedang digunakan tidak dapat dihapus, hanya bisa dinonaktifkan</li>
+          <li>Jika stok bahan tidak mencukupi untuk membuat menu, sistem menampilkan warning di kasir</li>
+          <li>Perubahan harga beli bahan otomatis merekalkasi HPP semua menu yang menggunakan bahan tersebut</li>
+          <li>Yield factor default 100% jika tidak diisi, bisa diupdate kapan saja</li>
+          <li>Log semua perubahan resep disimpan dengan versi dan timestamp (recipe versioning)</li>
+          <li>HPP teoritis vs aktual dibandingkan di laporan variance bulanan</li>
+        </ul>
+
+        <h3>Laporan Terkait Modul BOM</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Laporan</th><th>Deskripsi</th><th>Prioritas</th></tr></thead>
+            <tbody>
+              <tr><td>Laporan HPP per Menu</td><td>Rincian biaya bahan per menu, bandingkan antar periode</td><td><span class="badge-high">High</span></td></tr>
+              <tr><td>Laporan Food Cost Aktual</td><td>Food cost % per menu dan keseluruhan berdasarkan penjualan riil</td><td><span class="badge-high">High</span></td></tr>
+              <tr><td>Laporan Konsumsi Bahan</td><td>Total pemakaian setiap bahan dalam periode tertentu</td><td><span class="badge-high">High</span></td></tr>
+              <tr><td>Laporan Variance Stok</td><td>Selisih antara pemakaian bahan teoritis (dari resep) vs stok fisik aktual</td><td><span class="badge-medium">Medium</span></td></tr>
+              <tr><td>Menu Engineering Report</td><td>Matriks Stars/Plowhorses/Puzzles/Dogs untuk semua menu</td><td><span class="badge-medium">Medium</span></td></tr>
+              <tr><td>Simulasi Kenaikan HPP</td><td>Dampak kenaikan harga bahan ke seluruh menu</td><td><span class="badge-low">Low</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Database Schema — Master Bahan Baku</h3>
+        <div class="schema-block"><pre>{
+  <span class="key">_id</span>:                  <span class="type">ObjectId</span>,       <span class="cmt">// Primary key</span>
+  <span class="key">nama</span>:                 <span class="type">String</span>,         <span class="cmt">// "Ayam Potong"</span>
+  <span class="key">kategori</span>:            <span class="type">String</span>,         <span class="cmt">// daging | sayuran | bumbu | minuman | kemasan</span>
+  <span class="key">satuan_beli</span>:         <span class="type">String</span>,         <span class="cmt">// kg | liter | karton | pcs</span>
+  <span class="key">satuan_pakai</span>:        <span class="type">String</span>,         <span class="cmt">// gram | ml | pcs</span>
+  <span class="key">konversi</span>:            <span class="type">Number</span>,         <span class="cmt">// 1 satuan_beli = konversi satuan_pakai (1kg = 1000g)</span>
+  <span class="key">harga_beli</span>:          <span class="type">Number</span>,         <span class="cmt">// per satuan_beli (Rupiah)</span>
+  <span class="key">harga_per_satuan_pakai</span>: <span class="type">Number</span>,      <span class="cmt">// otomatis: harga_beli / konversi</span>
+  <span class="key">yield_factor</span>:        <span class="type">Number</span>,         <span class="cmt">// 0.01 - 1.00 (default: 1.00)</span>
+  <span class="key">stok</span>:                 <span class="type">Number</span>,         <span class="cmt">// stok saat ini dalam satuan_pakai</span>
+  <span class="key">stok_minimum</span>:        <span class="type">Number</span>,         <span class="cmt">// batas minimum sebelum trigger alert</span>
+  <span class="key">supplier_ids</span>:        <span class="type">Array&lt;ObjectId&gt;</span>, <span class="cmt">// referensi ke supplier aktif</span>
+  <span class="key">aktif</span>:                <span class="type">Boolean</span>,
+  <span class="key">created_at</span>:          <span class="type">DateTime</span>,
+  <span class="key">updated_at</span>:          <span class="type">DateTime</span>
+}</pre></div>
+
+        <h3>Database Schema — Resep / BOM</h3>
+        <div class="schema-block"><pre>{
+  <span class="key">_id</span>:                  <span class="type">ObjectId</span>,
+  <span class="key">menu_id</span>:              <span class="type">ObjectId</span>,       <span class="cmt">// ref ke koleksi produk/menu</span>
+  <span class="key">nama_resep</span>:          <span class="type">String</span>,         <span class="cmt">// "Ayam Goreng Crispy"</span>
+  <span class="key">porsi</span>:                <span class="type">Number</span>,         <span class="cmt">// jumlah porsi yang dihasilkan 1x resep</span>
+  <span class="key">bahan</span>: [
+    {
+      <span class="key">bahan_id</span>:          <span class="type">ObjectId</span>,       <span class="cmt">// ref ke master bahan baku</span>
+      <span class="key">qty</span>:               <span class="type">Number</span>,         <span class="cmt">// qty dalam satuan_pakai bahan</span>
+      <span class="key">satuan</span>:            <span class="type">String</span>,
+      <span class="key">is_sub_recipe</span>:     <span class="type">Boolean</span>         <span class="cmt">// true jika ini adalah sub-resep</span>
+    }
+  ],
+  <span class="key">sub_resep_ids</span>:       <span class="type">Array&lt;ObjectId&gt;</span>, <span class="cmt">// ref ke resep lain sebagai komponen</span>
+  <span class="key">hpp_bahan</span>:           <span class="type">Number</span>,         <span class="cmt">// total HPP bahan, dihitung otomatis</span>
+  <span class="key">overhead_persen</span>:    <span class="type">Number</span>,         <span class="cmt">// % overhead (gas, listrik, tenaga)</span>
+  <span class="key">hpp_total</span>:           <span class="type">Number</span>,         <span class="cmt">// hpp_bahan + overhead</span>
+  <span class="key">food_cost_target</span>:   <span class="type">Number</span>,         <span class="cmt">// target food cost % (0.25 - 0.35 standar)</span>
+  <span class="key">harga_jual_saran</span>:   <span class="type">Number</span>,         <span class="cmt">// hpp_total / food_cost_target</span>
+  <span class="key">catatan</span>:             <span class="type">String</span>,         <span class="cmt">// instruksi memasak / SOP</span>
+  <span class="key">versi</span>:               <span class="type">Number</span>,         <span class="cmt">// nomor versi untuk recipe versioning</span>
+  <span class="key">aktif</span>:               <span class="type">Boolean</span>,        <span class="cmt">// hanya 1 resep aktif per menu</span>
+  <span class="key">created_at</span>:         <span class="type">DateTime</span>,
+  <span class="key">updated_at</span>:         <span class="type">DateTime</span>
+}</pre></div>
+
+      </div>
+    </div>
+
+    <!-- ═══ SECTION 5: USER STORIES ═══ -->
+    <div class="section" id="s5">
+      <div class="section-banner" data-num="05">User Stories</div>
+      <div class="section-body">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>Sebagai (Role)</th><th>Saya Ingin...</th><th>Sehingga...</th></tr></thead>
+            <tbody>
+              <tr><td>US-001</td><td>Kasir</td><td>scan barcode produk agar masuk ke keranjang secara otomatis</td><td>transaksi lebih cepat tanpa perlu mengetik manual</td></tr>
+              <tr><td>US-002</td><td>Kasir</td><td>menerima pembayaran QRIS</td><td>pelanggan bisa bayar cashless dengan mudah</td></tr>
+              <tr><td>US-003</td><td>Kasir</td><td>tetap bisa bertransaksi saat internet mati</td><td>penjualan tidak terganggu masalah koneksi</td></tr>
+              <tr><td>US-004</td><td>Pemilik</td><td>melihat total penjualan hari ini dari HP</td><td>bisa pantau bisnis kapan saja tanpa ke toko</td></tr>
+              <tr><td>US-005</td><td>Pemilik</td><td>menerima notifikasi saat stok produk hampir habis</td><td>bisa segera order ke supplier sebelum kehabisan</td></tr>
+              <tr><td>US-006</td><td>Pemilik</td><td>melihat produk mana yang paling laris bulan ini</td><td>bisa fokus promosi dan stok di produk tersebut</td></tr>
+              <tr><td>US-007</td><td>Manager</td><td>buat purchase order ke supplier dari sistem</td><td>proses pembelian lebih terstruktur dan tercatat</td></tr>
+              <tr><td>US-008</td><td>Manager</td><td>kelola jadwal shift karyawan</td><td>pastikan semua shift terisi dan tidak ada konflik</td></tr>
+              <tr><td>US-009</td><td>Pelanggan</td><td>mendapatkan poin reward dari setiap pembelian</td><td>ada insentif untuk terus berbelanja di sini</td></tr>
+              <tr><td>US-010</td><td>Pelanggan</td><td>scan QR di meja untuk order sendiri</td><td>tidak perlu tunggu pelayan datang</td></tr>
+              <tr><td>US-011</td><td>Pemilik</td><td>ekspor laporan ke Excel</td><td>bisa olah data lebih lanjut atau kirim ke akuntan</td></tr>
+              <tr><td>US-012</td><td>Kasir</td><td>proses refund dengan mudah</td><td>pelanggan kecewa bisa ditangani dengan cepat</td></tr>
+              <tr><td>US-013</td><td>Manager Dapur</td><td>membuat resep menu dengan daftar bahan dan qty per porsi</td><td>stok bahan terpotong otomatis setiap ada penjualan</td></tr>
+              <tr><td>US-014</td><td>Pemilik</td><td>melihat HPP otomatis saat saya input bahan resep</td><td>bisa langsung tahu berapa harga jual yang tepat</td></tr>
+              <tr><td>US-015</td><td>Manager Dapur</td><td>membuat sub-resep untuk sambal dan kuah</td><td>bisa dipakai di banyak menu tanpa input ulang bahan</td></tr>
+              <tr><td>US-016</td><td>Pemilik</td><td>sistem memperingatkan saat stok bahan tidak cukup untuk order</td><td>kasir tidak menjual menu yang tidak bisa diproduksi</td></tr>
+              <tr><td>US-017</td><td>Manager Dapur</td><td>input faktor susut (yield) per bahan baku</td><td>kalkulasi HPP menjadi akurat sesuai kondisi nyata dapur</td></tr>
+              <tr><td>US-018</td><td>Pemilik</td><td>melihat laporan variance stok bahan bulanan</td><td>bisa deteksi pemborosan atau kehilangan bahan yang tidak wajar</td></tr>
+              <tr><td>US-019</td><td>Manager Dapur</td><td>buat batch production untuk memasak dalam jumlah besar sekaligus</td><td>stok bahan terpotong sesuai jumlah yang diproduksi</td></tr>
+              <tr><td>US-020</td><td>Pemilik</td><td>lihat menu engineering matrix (Stars/Dogs/Puzzles)</td><td>tahu menu mana yang perlu dipromosikan atau dihapus dari daftar</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SECTION 6: NON-FUNCTIONAL ═══ -->
+    <div class="section" id="s6">
+      <div class="section-banner" data-num="06">Persyaratan Non-Fungsional</div>
+      <div class="section-body">
+        <h2>6.1 Performa</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Parameter</th><th>Target</th><th>Prioritas</th></tr></thead>
+            <tbody>
+              <tr><td>Response Time</td><td>Setiap aksi di kasir harus selesai dalam &lt; 2 detik</td><td><span class="badge-high">High</span></td></tr>
+              <tr><td>Availability</td><td>Uptime minimal 99.5% (downtime max 3.6 jam/bulan)</td><td><span class="badge-high">High</span></td></tr>
+              <tr><td>Offline Capability</td><td>Mode offline harus bisa menampung minimal 500 transaksi</td><td><span class="badge-high">High</span></td></tr>
+              <tr><td>Sync Speed</td><td>Sinkronisasi offline ke cloud selesai dalam &lt; 30 detik</td><td><span class="badge-medium">Medium</span></td></tr>
+              <tr><td>Concurrent Users</td><td>Mendukung 50 kasir aktif bersamaan per merchant</td><td><span class="badge-medium">Medium</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2>6.2 Keamanan</h2>
+        <ul class="feat-list">
+          <li><strong>Autentikasi:</strong> Username/password + opsi PIN 6-digit untuk kasir</li>
+          <li><strong>Enkripsi:</strong> Semua data sensitif dienkripsi AES-256 saat disimpan dan HTTPS/TLS saat dikirim</li>
+          <li><strong>RBAC:</strong> Setiap role hanya bisa akses fitur yang diizinkan (Owner &gt; Manager &gt; Kasir &gt; Staff)</li>
+          <li><strong>Audit Log:</strong> Setiap perubahan data penting dicatat lengkap (siapa, kapan, apa)</li>
+          <li><strong>Session Timeout:</strong> Sesi kasir otomatis terkunci setelah 15 menit idle</li>
+        </ul>
+
+        <h2>6.3 Usability</h2>
+        <ul class="feat-list">
+          <li>Kasir baru harus bisa melakukan transaksi pertama dalam &lt; 15 menit setelah onboarding</li>
+          <li>Interface menggunakan Bahasa Indonesia yang sederhana, menghindari istilah teknis</li>
+          <li>Mendukung ukuran layar: 7 inch (tablet kasir) hingga 27 inch (desktop)</li>
+          <li>Dark mode tersedia untuk penggunaan di tempat dengan pencahayaan rendah</li>
+        </ul>
+
+        <h2>6.4 Skalabilitas &amp; Kompatibilitas</h2>
+        <ul class="feat-list">
+          <li>Arsitektur cloud-native, bisa scale horizontal saat lonjakan transaksi (harbolnas, dll.)</li>
+          <li>Browser: Chrome, Firefox, Safari, Edge (versi terkini)</li>
+          <li>Mobile OS: Android 8.0+ dan iOS 13+</li>
+          <li>Hardware POS: kompatibel dengan printer ESC/POS standar (Epson, Bixolon, Cashino)</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ═══ SECTION 7: ROADMAP ═══ -->
+    <div class="section" id="s7">
+      <div class="section-banner" data-num="07">Release Roadmap</div>
+      <div class="section-body">
+
+        <div class="phase-block">
+          <div class="phase-header">
+            <div class="phase-num">MVP</div>
+            <div class="phase-title">Phase 1 — Fondasi Transaksi</div>
+            <div class="phase-period">Bulan 1–3</div>
+          </div>
+          <div class="phase-body">
+            <p style="margin-bottom:12px">Target: Produk dapat digunakan oleh UMKM retail dan F&B sederhana untuk bertransaksi sehari-hari.</p>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Fitur</th><th>Deskripsi</th><th>Prioritas</th></tr></thead>
+                <tbody>
+                  <tr><td>Transaksi Kasir Dasar</td><td>Jual produk, terima pembayaran tunai dan QRIS, cetak struk</td><td><span class="badge-high">High</span></td></tr>
+                  <tr><td>Manajemen Produk</td><td>CRUD produk, kategori, harga, stok sederhana</td><td><span class="badge-high">High</span></td></tr>
+                  <tr><td>Laporan Harian</td><td>Total penjualan, produk terlaris, omzet per hari</td><td><span class="badge-high">High</span></td></tr>
+                  <tr><td>Manajemen User</td><td>Login, role kasir &amp; owner, buka/tutup shift</td><td><span class="badge-high">High</span></td></tr>
+                  <tr><td>Offline Mode Dasar</td><td>Transaksi saat internet mati, sinkron saat online kembali</td><td><span class="badge-high">High</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="phase-block">
+          <div class="phase-header">
+            <div class="phase-num">PHASE 2</div>
+            <div class="phase-title">Kelengkapan Fitur</div>
+            <div class="phase-period">Bulan 4–6</div>
+          </div>
+          <div class="phase-body">
+            <p style="margin-bottom:12px">Target: Tingkatkan kelengkapan fitur untuk menarik merchant yang lebih besar.</p>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Fitur</th><th>Deskripsi</th><th>Prioritas</th></tr></thead>
+                <tbody>
+                  <tr><td>Manajemen Inventori</td><td>PO, penerimaan barang, alert stok minimum, stock opname</td><td><span class="badge-high">High</span></td></tr>
+                  <tr><td>Manajemen Pelanggan</td><td>Database customer, riwayat transaksi, loyalty points dasar</td><td><span class="badge-medium">Medium</span></td></tr>
+                  <tr><td>Manajemen Karyawan</td><td>Shift, absensi, hak akses per role</td><td><span class="badge-medium">Medium</span></td></tr>
+                  <tr><td>Struk Digital</td><td>Kirim struk via WhatsApp/email</td><td><span class="badge-medium">Medium</span></td></tr>
+                  <tr><td>Laporan Lengkap</td><td>Laporan stok, laporan karyawan, ekspor Excel</td><td><span class="badge-medium">Medium</span></td></tr>
+                  <tr><td>Recipe &amp; BOM Dasar ★</td><td>Setup bahan baku, builder resep, potong stok otomatis per bahan, kalkulasi HPP</td><td><span class="badge-high">High</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="phase-block">
+          <div class="phase-header">
+            <div class="phase-num">PHASE 3</div>
+            <div class="phase-title">Fitur Advanced &amp; Ekosistem</div>
+            <div class="phase-period">Bulan 7–12</div>
+          </div>
+          <div class="phase-body">
+            <p style="margin-bottom:12px">Target: Fitur advanced untuk merchant multi-outlet dan integrasi ekosistem digital.</p>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Fitur</th><th>Deskripsi</th><th>Prioritas</th></tr></thead>
+                <tbody>
+                  <tr><td>Multi-Outlet</td><td>Dashboard konsolidasi, transfer stok, setting per outlet</td><td><span class="badge-medium">Medium</span></td></tr>
+                  <tr><td>Manajemen Meja F&amp;B</td><td>Denah meja, QR order, kitchen display system</td><td><span class="badge-medium">Medium</span></td></tr>
+                  <tr><td>Integrasi Marketplace</td><td>GoFood, GrabFood, sinkronisasi Tokopedia &amp; Shopee</td><td><span class="badge-medium">Medium</span></td></tr>
+                  <tr><td>Modul Akuntansi</td><td>Jurnal otomatis, laba-rugi, integrasi e-Faktur DJP</td><td><span class="badge-low">Low</span></td></tr>
+                  <tr><td>CRM Lanjutan</td><td>Segmentasi pelanggan, broadcast promo, birthday reward</td><td><span class="badge-low">Low</span></td></tr>
+                  <tr><td>Recipe &amp; BOM Lanjutan ★</td><td>Sub-resep bertingkat, yield factor, batch production, menu engineering matrix, variance report</td><td><span class="badge-medium">Medium</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SECTION 8: ACCEPTANCE CRITERIA ═══ -->
+    <div class="section" id="s8">
+      <div class="section-banner" data-num="08">Kriteria Penerimaan (Acceptance Criteria)</div>
+      <div class="section-body">
+        <h2>8.1 F-01: Transaksi Kasir</h2>
+        <ol class="steps">
+          <li>Kasir berhasil memproses transaksi dari nol sampai struk tercetak dalam &lt; 60 detik</li>
+          <li>Pembayaran QRIS berhasil tervalidasi dan stok berkurang otomatis</li>
+          <li>Dalam mode offline, 100 transaksi berhasil tersimpan lokal dan tersinkron saat online</li>
+          <li>Fitur hold order berhasil menahan transaksi dan dilanjutkan tanpa data hilang</li>
+        </ol>
+        <h2>8.2 F-03: Inventori</h2>
+        <ol class="steps">
+          <li>Setiap transaksi penjualan mengurangi stok produk secara real-time</li>
+          <li>Notifikasi stok minimum terkirim dalam &lt; 5 menit setelah stok menyentuh threshold</li>
+          <li>Purchase Order dapat dibuat, dikirim, dan diterima dengan stok bertambah otomatis</li>
+        </ol>
+        <h2>8.3 F-06: Laporan</h2>
+        <ol class="steps">
+          <li>Laporan penjualan harian dapat diakses dalam &lt; 3 detik</li>
+          <li>Export Excel berhasil menghasilkan file yang dapat dibuka tanpa error</li>
+          <li>Data laporan akurat dan konsisten dengan transaksi yang tercatat di kasir</li>
+        </ol>
+        <h2>8.4 F-15: Recipe &amp; BOM Management</h2>
+        <ol class="steps">
+          <li>Setelah resep menu disimpan, setiap penjualan 1 porsi menu berhasil memotong stok masing-masing bahan baku sesuai qty yang didefinisikan di resep</li>
+          <li>HPP per menu terhitung otomatis dan berubah dalam &lt; 5 detik saat harga beli salah satu bahan diupdate</li>
+          <li>Sub-resep berhasil di-trace hingga ke bahan baku paling dasar, semua bahan terpotong dengan benar</li>
+          <li>Yield factor diterapkan dengan benar: stok terpotong = qty resep / yield factor, bukan qty resep mentah</li>
+          <li>Batch production berhasil memotong stok bahan sejumlah resep × batch, dan menambah stok semi-finished product</li>
+          <li>Warning 'stok tidak mencukupi' muncul di kasir saat salah satu bahan kurang dari yang dibutuhkan</li>
+          <li>Laporan variance stok menampilkan selisih antara pemakaian teoritis dan aktual dengan akurasi 100%</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- ═══ SECTION 9: RISIKO ═══ -->
+    <div class="section" id="s9">
+      <div class="section-banner" data-num="09">Analisis Risiko &amp; Mitigasi</div>
+      <div class="section-body">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Risiko</th><th>Mitigasi</th><th>Severity</th></tr></thead>
+            <tbody>
+              <tr><td>Koneksi internet tidak stabil di area UMKM</td><td>Implementasi offline-first architecture dengan IndexedDB/local storage</td><td><span class="badge-high">High</span></td></tr>
+              <tr><td>Adopsi rendah karena gagap teknologi</td><td>UX semudah mungkin, onboarding wizard, video tutorial Bahasa Indonesia</td><td><span class="badge-high">High</span></td></tr>
+              <tr><td>Data hilang saat perangkat rusak</td><td>Semua data backup ke cloud setiap 15 menit, tidak ada data sensitif hanya di lokal</td><td><span class="badge-high">High</span></td></tr>
+              <tr><td>Keamanan data transaksi pelanggan</td><td>Enkripsi end-to-end, compliance PDPA, audit keamanan berkala</td><td><span class="badge-medium">Medium</span></td></tr>
+              <tr><td>Integrasi payment gateway gagal</td><td>Fallback ke manual konfirmasi, retry otomatis, alert ke owner</td><td><span class="badge-medium">Medium</span></td></tr>
+              <tr><td>Skalabilitas saat peak transaction</td><td>Auto-scaling cloud infrastructure (AWS/GCP), load testing rutin</td><td><span class="badge-medium">Medium</span></td></tr>
+              <tr><td>HPP tidak akurat jika resep tidak di-update</td><td>Notifikasi otomatis ke owner jika harga beli bahan berubah &gt; 10%, saran update harga jual</td><td><span class="badge-medium">Medium</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SECTION 10: GLOSARIUM ═══ -->
+    <div class="section" id="s10">
+      <div class="section-banner" data-num="10">Glosarium</div>
+      <div class="section-body">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Istilah</th><th>Definisi</th></tr></thead>
+            <tbody>
+              <tr><td>POS</td><td>Point of Sale — sistem manajemen transaksi di titik penjualan</td></tr>
+              <tr><td>UMKM</td><td>Usaha Mikro, Kecil, dan Menengah</td></tr>
+              <tr><td>SKU</td><td>Stock Keeping Unit — kode unik untuk identifikasi produk</td></tr>
+              <tr><td>QRIS</td><td>Quick Response Code Indonesian Standard — standar kode QR pembayaran Bank Indonesia</td></tr>
+              <tr><td>KDS</td><td>Kitchen Display System — layar di dapur untuk tampilkan pesanan masuk</td></tr>
+              <tr><td>PO</td><td>Purchase Order — dokumen pemesanan barang ke supplier</td></tr>
+              <tr><td>RFM</td><td>Recency, Frequency, Monetary — analisis segmentasi pelanggan</td></tr>
+              <tr><td>RBAC</td><td>Role-Based Access Control — kontrol hak akses berbasis peran pengguna</td></tr>
+              <tr><td>CRM</td><td>Customer Relationship Management — manajemen hubungan pelanggan</td></tr>
+              <tr><td>e-Faktur</td><td>Faktur Pajak Elektronik — sistem DJP Pajak Indonesia</td></tr>
+              <tr><td>Offline Mode</td><td>Mode operasional saat tidak ada koneksi internet</td></tr>
+              <tr><td>Shift</td><td>Periode kerja kasir — buka sesi hingga tutup sesi dengan laporan kas</td></tr>
+              <tr><td>BOM</td><td>Bill of Materials — daftar komponen/bahan yang dibutuhkan untuk membuat satu produk/menu</td></tr>
+              <tr><td>HPP</td><td>Harga Pokok Produksi/Penjualan — total biaya bahan baku untuk menghasilkan satu porsi menu</td></tr>
+              <tr><td>Food Cost %</td><td>Persentase biaya bahan terhadap harga jual — standar industri F&B Indonesia 25–35%</td></tr>
+              <tr><td>Yield Factor</td><td>Faktor susut: persentase bahan yang tersisa dan dapat digunakan setelah proses pengolahan/memasak</td></tr>
+              <tr><td>Sub-Resep</td><td>Resep bertingkat — komponen dalam sebuah resep yang juga memiliki resepnya sendiri (mis: sambal, kuah)</td></tr>
+              <tr><td>Batch Production</td><td>Produksi massal: memasak dalam jumlah besar sekaligus, bukan per porsi per transaksi</td></tr>
+              <tr><td>Menu Engineering</td><td>Analisis menu berdasarkan popularitas dan profitabilitas, menghasilkan matriks Stars/Plowhorses/Puzzles/Dogs</td></tr>
+              <tr><td>Variance Stok</td><td>Selisih antara pemakaian bahan teoritis (dari resep) vs pemakaian aktual fisik di dapur</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+
+  <div class="doc-footer">
+    <strong>PRD Sistem POS UMKM Indonesia</strong> · Versi 1.1 · April 2026<br>
+    Referensi: majoo.id · mokapos.com · iREAP POS · Pawoon · Kasir Pintar · Toast POS · Lightspeed<br>
+    Dokumen ini bersifat konfidensial dan ditujukan untuk tim product &amp; engineering internal.
+  </div>
+
+</main>
+
+<script>
+  // Highlight active nav item on scroll
+  const sections = document.querySelectorAll('[id]');
+  const navLinks = document.querySelectorAll('.nav-section a');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(link => {
+          link.classList.remove('active');
+          if (link.getAttribute('href') === '#' + entry.target.id) {
+            link.classList.add('active');
+          }
+        });
+      }
+    });
+  }, { threshold: 0.3 });
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
