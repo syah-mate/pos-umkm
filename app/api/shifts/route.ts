@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Shift from '@/models/Shift';
+import User from '@/models/User';
 
 // GET all shifts
 export async function GET(request: NextRequest) {

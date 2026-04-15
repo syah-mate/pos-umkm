@@ -1,4 +1,6 @@
 import mongoose, { Document, Model, Schema } from 'mongoose';
+// Import Category to ensure it's registered before Product
+import Category from './Category';
 
 export interface IProduct extends Document {
   sku: string;

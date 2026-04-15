@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import PurchaseOrder from '@/models/PurchaseOrder';
+import Supplier from '@/models/Supplier';
+import Product from '@/models/Product';
+import User from '@/models/User';
 
 // GET all purchase orders
 export async function GET(request: NextRequest) {

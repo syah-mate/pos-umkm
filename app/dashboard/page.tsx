@@ -137,23 +137,23 @@ export default function Dashboard() {
   return (
     <div>
       {/* Welcome Banner */}
-      <div className="bg-linear-to-r from-blue-600 to-blue-700 rounded-2xl shadow-xl p-8 mb-8 text-white">
-        <h1 className="text-3xl font-bold mb-2">Selamat Datang, {user?.name}! 👋</h1>
-        <p className="text-blue-100">Berikut ringkasan bisnis Anda hari ini</p>
+      <div className="bg-gradient-to-r from-amber-100 to-stone-200 rounded-2xl shadow-lg p-6 mb-6 border border-amber-200">
+        <h1 className="text-2xl font-bold mb-1 text-amber-900">Selamat Datang, {user?.name}! 👋</h1>
+        <p className="text-stone-700 text-sm">Berikut ringkasan bisnis Anda hari ini</p>
       </div>
 
       {/* Active Shift Alert */}
       {stats.activeShift && (
-        <div className="bg-green-50 border-l-4 border-green-500 p-4 mb-6 rounded-lg">
+        <div className="bg-green-50 border-l-4 border-green-600 p-4 mb-6 rounded-lg" role="status" aria-live="polite">
           <div className="flex items-center">
             <div className="shrink-0">
-              <span className="text-2xl">✅</span>
+              <span className="text-2xl" aria-hidden="true">✅</span>
             </div>
             <div className="ml-3">
-              <p className="text-sm font-medium text-green-800">
+              <p className="text-base font-semibold text-green-800">
                 Shift Aktif - {stats.activeShift.cashierName}
               </p>
-              <p className="text-xs text-green-700 mt-1">
+              <p className="text-sm text-green-800 mt-1">
                 Mulai: {new Date(stats.activeShift.startTime).toLocaleString('id-ID')}
               </p>
             </div>
@@ -163,64 +163,64 @@ export default function Dashboard() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500">
+        <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-amber-500">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-500 text-sm font-medium">Penjualan Hari Ini</p>
-              <p className="text-2xl font-bold text-gray-800 mt-1">
+              <p className="text-gray-700 text-sm font-semibold">Penjualan Hari Ini</p>
+              <p className="text-xl font-bold text-gray-900 mt-1">
                 {formatCurrency(stats.todaySales)}
               </p>
             </div>
-            <div className="bg-blue-100 rounded-full p-3">
-              <span className="text-3xl">💰</span>
+            <div className="bg-amber-100 rounded-full p-2.5">
+              <span className="text-2xl" aria-hidden="true">💰</span>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500">
+        <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-green-600">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-500 text-sm font-medium">Transaksi</p>
-              <p className="text-2xl font-bold text-gray-800 mt-1">
+              <p className="text-gray-700 text-sm font-semibold">Transaksi</p>
+              <p className="text-xl font-bold text-gray-900 mt-1">
                 {stats.todayTransactions}
               </p>
-              <p className="text-xs text-gray-500 mt-1">Hari ini</p>
+              <p className="text-xs text-gray-700 mt-1">Hari ini</p>
             </div>
-            <div className="bg-green-100 rounded-full p-3">
-              <span className="text-3xl">🛒</span>
+            <div className="bg-green-100 rounded-full p-2.5">
+              <span className="text-2xl" aria-hidden="true">🛒</span>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-purple-500">
+        <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-purple-600">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-500 text-sm font-medium">Total Produk</p>
-              <p className="text-2xl font-bold text-gray-800 mt-1">
+              <p className="text-gray-700 text-sm font-semibold">Total Produk</p>
+              <p className="text-xl font-bold text-gray-900 mt-1">
                 {stats.totalProducts}
               </p>
               {stats.lowStockProducts > 0 && (
-                <p className="text-xs text-red-600 mt-1 font-medium">
-                  ⚠️ {stats.lowStockProducts} stok rendah
+                <p className="text-xs text-red-700 mt-1 font-semibold" role="alert">
+                  <span aria-hidden="true">⚠️</span> {stats.lowStockProducts} stok rendah
                 </p>
               )}
             </div>
-            <div className="bg-purple-100 rounded-full p-3">
-              <span className="text-3xl">📦</span>
+            <div className="bg-purple-100 rounded-full p-2.5">
+              <span className="text-2xl" aria-hidden="true">📦</span>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-orange-500">
+        <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-orange-600">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-500 text-sm font-medium">Total Pelanggan</p>
-              <p className="text-2xl font-bold text-gray-800 mt-1">
+              <p className="text-gray-700 text-sm font-semibold">Total Pelanggan</p>
+              <p className="text-xl font-bold text-gray-900 mt-1">
                 {stats.totalCustomers}
               </p>
             </div>
-            <div className="bg-orange-100 rounded-full p-3">
-              <span className="text-3xl">👥</span>
+            <div className="bg-orange-100 rounded-full p-2.5">
+              <span className="text-2xl" aria-hidden="true">👥</span>
             </div>
           </div>
         </div>
@@ -228,38 +228,38 @@ export default function Dashboard() {
 
       {/* Quick Actions */}
       <div className="bg-white rounded-xl shadow-md p-6">
-        <h2 className="text-xl font-bold text-gray-800 mb-4">Quick Actions</h2>
+        <h2 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Link
             href="/dashboard/pos"
-            className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all group"
+            className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-amber-500 hover:bg-amber-50 transition-all group focus:ring-4 focus:ring-amber-400/50 focus:outline-none"
           >
-            <span className="text-4xl mb-2 group-hover:scale-110 transition-transform">🛒</span>
-            <span className="text-sm font-medium text-gray-700 group-hover:text-blue-600">Buka Kasir</span>
+            <span className="text-4xl mb-2 group-hover:scale-110 transition-transform" aria-hidden="true">🛒</span>
+            <span className="text-base font-semibold text-gray-900 group-hover:text-amber-800">Buka Kasir</span>
           </Link>
 
           <Link
             href="/dashboard/products"
-            className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-all group"
+            className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-600 hover:bg-purple-50 transition-all group focus:ring-4 focus:ring-purple-500/50 focus:outline-none"
           >
-            <span className="text-4xl mb-2 group-hover:scale-110 transition-transform">📦</span>
-            <span className="text-sm font-medium text-gray-700 group-hover:text-purple-600">Kelola Produk</span>
+            <span className="text-4xl mb-2 group-hover:scale-110 transition-transform" aria-hidden="true">📦</span>
+            <span className="text-base font-semibold text-gray-900 group-hover:text-purple-700">Kelola Produk</span>
           </Link>
 
           <Link
             href="/dashboard/reports"
-            className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-500 hover:bg-green-50 transition-all group"
+            className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-600 hover:bg-green-50 transition-all group focus:ring-4 focus:ring-green-500/50 focus:outline-none"
           >
-            <span className="text-4xl mb-2 group-hover:scale-110 transition-transform">📈</span>
-            <span className="text-sm font-medium text-gray-700 group-hover:text-green-600">Lihat Laporan</span>
+            <span className="text-4xl mb-2 group-hover:scale-110 transition-transform" aria-hidden="true">📈</span>
+            <span className="text-base font-semibold text-gray-900 group-hover:text-green-700">Lihat Laporan</span>
           </Link>
 
           <Link
             href="/dashboard/inventory"
-            className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-orange-500 hover:bg-orange-50 transition-all group"
+            className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-orange-600 hover:bg-orange-50 transition-all group focus:ring-4 focus:ring-orange-500/50 focus:outline-none"
           >
-            <span className="text-4xl mb-2 group-hover:scale-110 transition-transform">📋</span>
-            <span className="text-sm font-medium text-gray-700 group-hover:text-orange-600">Purchase Order</span>
+            <span className="text-4xl mb-2 group-hover:scale-110 transition-transform" aria-hidden="true">📋</span>
+            <span className="text-base font-semibold text-gray-900 group-hover:text-orange-700">Purchase Order</span>
           </Link>
         </div>
       </div>

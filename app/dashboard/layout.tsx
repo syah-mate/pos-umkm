@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 
@@ -8,51 +9,43 @@ const menuItems = [
   { 
     name: 'Dashboard', 
     icon: '📊', 
-    path: '/dashboard',
-    description: 'Overview & Analytics'
+    path: '/dashboard'
   },
   { 
-    name: 'Kasir / POS', 
+    name: 'Kasir', 
     icon: '🛒', 
     path: '/dashboard/pos',
-    description: 'Point of Sale',
     highlight: true
   },
   { 
     name: 'Produk', 
     icon: '📦', 
-    path: '/dashboard/products',
-    description: 'Product Management'
+    path: '/dashboard/products'
   },
   { 
-    name: 'Inventori', 
+    name: 'Purchase Orders', 
     icon: '📋', 
-    path: '/dashboard/inventory',
-    description: 'Purchase Orders'
+    path: '/dashboard/inventory'
   },
   { 
     name: 'Pelanggan', 
     icon: '👥', 
-    path: '/dashboard/customers',
-    description: 'Customer Database'
+    path: '/dashboard/customers'
   },
   { 
     name: 'Resep & BOM', 
     icon: '🍳', 
-    path: '/dashboard/recipes',
-    description: 'Recipe Management'
+    path: '/dashboard/recipes'
   },
   { 
     name: 'Laporan', 
     icon: '📈', 
-    path: '/dashboard/reports',
-    description: 'Sales & Inventory Reports'
+    path: '/dashboard/reports'
   },
   { 
     name: 'Shift', 
     icon: '🕐', 
-    path: '/dashboard/shifts',
-    description: 'Shift Management'
+    path: '/dashboard/shifts'
   },
 ];
 
@@ -107,36 +100,43 @@ export default function DashboardLayout({
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
-      <aside className="w-72 bg-linear-to-b from-blue-600 to-blue-700 text-white shadow-2xl">
+      <aside className="w-56 bg-linear-to-b from-amber-50 to-stone-100 text-gray-800 shadow-lg border-r border-stone-200" role="navigation" aria-label="Main navigation">
         {/* Logo */}
-        <div className="p-6 border-b border-blue-500">
-          <h1 className="text-2xl font-bold">POS UMKM</h1>
-          <p className="text-xs text-blue-200 mt-1">Point of Sale System</p>
+        <div className="py-4 px-2 border-b border-stone-200 flex items-center justify-center">
+          <Image 
+            src="/logo.png" 
+            alt="Lentera POS" 
+            width={800} 
+            height={200}
+            priority
+            className="w-auto h-16"
+          />
         </div>
 
         {/* Navigation */}
-        <nav className="p-4 overflow-y-auto h-[calc(100vh-180px)]">
+        <nav className="p-3 overflow-y-auto h-[calc(100vh-152px)]">
           {menuItems.map((item) => {
             const isActive = pathname === item.path;
             return (
               <Link
                 key={item.path}
                 href={item.path}
+                aria-current={isActive ? 'page' : undefined}
                 className={`
-                  flex items-start gap-3 px-4 py-3 rounded-lg mb-2 transition-all
+                  flex items-start gap-2 px-3 py-2 rounded-lg mb-1.5 transition-all focus:ring-2 focus:ring-amber-400 focus:outline-none
                   ${isActive 
-                    ? 'bg-white text-blue-700 shadow-lg font-semibold' 
-                    : 'hover:bg-blue-500/50 text-white'
+                    ? 'bg-amber-100 text-amber-900 shadow-sm font-semibold border border-amber-200' 
+                    : 'hover:bg-stone-100 text-gray-700 hover:text-gray-900'
                   }
-                  ${item.highlight ? 'ring-2 ring-yellow-400 ring-offset-2 ring-offset-blue-600' : ''}
+                  ${item.highlight ? 'ring-1 ring-amber-300' : ''}
                 `}
               >
-                <span className="text-2xl">{item.icon}</span>
+                <span className="text-lg" aria-hidden="true">{item.icon}</span>
                 <div className="flex-1">
-                  <div className="font-medium">{item.name}</div>
-                  <div className={`text-xs ${isActive ? 'text-blue-600' : 'text-blue-200'}`}>
+                  <div className="font-semibold text-sm">{item.name}</div>
+                  {/* <div className={`text-xs ${isActive ? 'text-amber-700' : 'text-stone-500'}`}>
                     {item.description}
-                  </div>
+                  </div> */}
                 </div>
               </Link>
             );
@@ -144,43 +144,48 @@ export default function DashboardLayout({
         </nav>
 
         {/* User Profile */}
-        <div className="absolute bottom-0 left-0 right-0 w-72 bg-blue-800 p-4 border-t border-blue-600">
+        <div className="absolute bottom-0 left-0 right-0 w-56 bg-stone-100 p-3 border-t border-stone-200">
           <div className="relative">
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
-              className="w-full flex items-center gap-3 hover:bg-blue-700 p-3 rounded-lg transition-colors"
+              aria-expanded={showUserMenu}
+              aria-haspopup="true"
+              className="w-full flex items-center gap-2 hover:bg-stone-200 p-2 rounded-lg transition-colors focus:ring-2 focus:ring-amber-400 focus:outline-none"
             >
-              <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center font-bold">
+              <div className="w-8 h-8 bg-amber-200 rounded-full flex items-center justify-center font-bold text-sm text-amber-900" aria-hidden="true">
                 {userName[0].toUpperCase()}
               </div>
               <div className="flex-1 text-left">
-                <div className="font-medium">{userName}</div>
-                <div className="text-xs text-blue-300">Administrator</div>
+                <div className="font-semibold text-sm text-gray-900">{userName}</div>
+                <div className="text-xs text-stone-600">Administrator</div>
               </div>
-              <span className="text-xl">⚙️</span>
+              <span className="text-base" aria-hidden="true">⚙️</span>
             </button>
 
             {/* User Menu Dropdown */}
             {showUserMenu && (
-              <div className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-lg shadow-xl py-2 text-gray-700">
+              <div className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-lg shadow-xl py-1 text-gray-900 border border-stone-200" role="menu">
                 <button
-                  className="w-full px-4 py-2 hover:bg-gray-100 text-left flex items-center gap-2"
+                  className="w-full px-3 py-2 hover:bg-amber-50 text-left flex items-center gap-2 text-sm focus:bg-amber-50 focus:outline-none"
                   onClick={() => alert('Profil - Coming Soon')}
+                  role="menuitem"
                 >
-                  <span>👤</span> Profil
+                  <span aria-hidden="true">👤</span> Profil
                 </button>
                 <button
-                  className="w-full px-4 py-2 hover:bg-gray-100 text-left flex items-center gap-2"
+                  className="w-full px-3 py-2 hover:bg-amber-50 text-left flex items-center gap-2 text-sm focus:bg-amber-50 focus:outline-none"
                   onClick={() => alert('Pengaturan - Coming Soon')}
+                  role="menuitem"
                 >
-                  <span>⚙️</span> Pengaturan
+                  <span aria-hidden="true">⚙️</span> Pengaturan
                 </button>
-                <hr className="my-2" />
+                <hr className="my-1" />
                 <button
-                  className="w-full px-4 py-2 hover:bg-red-50 text-red-600 text-left flex items-center gap-2 font-medium"
+                  className="w-full px-3 py-2 hover:bg-red-50 text-red-700 text-left flex items-center gap-2 font-semibold text-sm focus:bg-red-50 focus:outline-none"
                   onClick={handleLogout}
+                  role="menuitem"
                 >
-                  <span>🚪</span> Logout
+                  <span aria-hidden="true">🚪</span> Logout
                 </button>
               </div>
             )}
@@ -191,22 +196,22 @@ export default function DashboardLayout({
       {/* Main Content */}
       <main className="flex-1 overflow-auto">
         {/* Header */}
-        <header className="bg-white shadow-sm border-b border-gray-200 px-8 py-4 sticky top-0 z-10">
+        <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-2.5 sticky top-0 z-10">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-gray-800">
+              <h2 className="text-lg font-bold text-gray-900">
                 {menuItems.find(item => item.path === pathname)?.name || 'Dashboard'}
               </h2>
-              <p className="text-sm text-gray-500">
+              {/* <p className="text-xs text-gray-700">
                 {menuItems.find(item => item.path === pathname)?.description || 'Welcome back'}
-              </p>
+              </p> */}
             </div>
             <div className="flex items-center gap-4">
               <div className="text-right">
-                <div className="text-sm font-medium text-gray-700">
+                <div className="text-sm font-semibold text-gray-900">
                   {currentDate}
                 </div>
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-gray-700">
                   {currentTime}
                 </div>
               </div>
@@ -215,7 +220,7 @@ export default function DashboardLayout({
         </header>
 
         {/* Page Content */}
-        <div className="p-8">
+        <div className="p-6">
           {children}
         </div>
       </main>

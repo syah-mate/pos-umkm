@@ -276,16 +276,16 @@ export default function POSPage() {
             placeholder="🔍 Cari produk (nama atau SKU)..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg mb-3 focus:ring-4 focus:ring-amber-400/50 focus:outline-none"
           />
           
           <div className="flex gap-2 overflow-x-auto">
             <button
               onClick={() => setSelectedCategory('')}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap ${
+              className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap focus:ring-4 focus:ring-amber-400/50 focus:outline-none ${
                 selectedCategory === ''
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  ? 'bg-amber-600 text-white'
+                  : 'bg-gray-200 text-gray-900 hover:bg-gray-300'
               }`}
             >
               Semua
@@ -294,10 +294,10 @@ export default function POSPage() {
               <button
                 key={category._id}
                 onClick={() => setSelectedCategory(category._id)}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap ${
+                className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap focus:ring-4 focus:ring-amber-400/50 focus:outline-none ${
                   selectedCategory === category._id
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    ? 'bg-amber-600 text-white'
+                    : 'bg-gray-200 text-gray-900 hover:bg-gray-300'
                 }`}
               >
                 {category.name}
@@ -317,7 +317,7 @@ export default function POSPage() {
                 className={`text-left p-4 rounded-lg border-2 transition-all ${
                   product.stock <= 0
                     ? 'bg-gray-100 border-gray-200 opacity-50 cursor-not-allowed'
-                    : 'bg-white border-gray-200 hover:border-blue-500 hover:shadow-lg'
+                    : 'bg-white border-gray-200 hover:border-amber-500 hover:shadow-lg'
                 }`}
               >
                 <div className="h-32 bg-linear-to-br from-blue-100 to-purple-100 rounded-lg mb-3 flex items-center justify-center">
@@ -326,7 +326,7 @@ export default function POSPage() {
                 <h3 className="font-semibold text-gray-800 mb-1 line-clamp-2">{product.name}</h3>
                 <p className="text-sm text-gray-500 mb-2">{product.sku}</p>
                 <div className="flex justify-between items-center">
-                  <span className="text-lg font-bold text-blue-600">
+                  <span className="text-lg font-bold text-amber-600">
                     {formatCurrency(product.price)}
                   </span>
                   <span
@@ -357,9 +357,9 @@ export default function POSPage() {
       {/* Right Panel - Cart */}
       <div className="w-96 flex flex-col bg-white rounded-xl shadow-md overflow-hidden">
         {/* Cart Header */}
-        <div className="bg-linear-to-r from-blue-600 to-blue-700 p-4 text-white">
+        <div className="bg-linear-to-r from-amber-600 to-amber-700 p-4 text-white">
           <h2 className="text-xl font-bold">Keranjang</h2>
-          <p className="text-sm text-blue-100">{cart.length} item</p>
+          <p className="text-sm text-amber-100">{cart.length} item</p>
         </div>
 
         {/* Customer Selection */}
@@ -373,7 +373,7 @@ export default function POSPage() {
               const customer = customers.find(c => c._id === e.target.value);
               setSelectedCustomer(customer || null);
             }}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-4 focus:ring-amber-400/50 focus:outline-none"
           >
             <option value="">Pelanggan Umum</option>
             {customers.map(customer => (
@@ -432,7 +432,7 @@ export default function POSPage() {
                         +
                       </button>
                     </div>
-                    <span className="font-bold text-blue-600">
+                    <span className="font-bold text-amber-600">
                       {formatCurrency(item.subtotal)}
                     </span>
                   </div>
@@ -452,20 +452,21 @@ export default function POSPage() {
               </div>
               <div className="flex justify-between text-lg font-bold">
                 <span>Total:</span>
-                <span className="text-blue-600">{formatCurrency(calculateTotal())}</span>
+                <span className="text-amber-600">{formatCurrency(calculateTotal())}</span>
               </div>
             </div>
 
             <div className="flex gap-2">
               <button
                 onClick={clearCart}
-                className="flex-1 py-3 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg font-medium transition-colors"
+                className="flex-1 py-3 bg-red-100 text-red-800 hover:bg-red-200 rounded-lg font-medium transition-colors focus:ring-4 focus:ring-red-500/50 focus:outline-none"
+                aria-label="Clear cart"
               >
                 Bersihkan
               </button>
               <button
                 onClick={handleCheckout}
-                className="flex-1 py-3 bg-blue-600 text-white hover:bg-blue-700 rounded-lg font-medium transition-colors"
+                className="flex-1 py-3 bg-amber-600 text-white hover:bg-amber-700 rounded-lg font-medium transition-colors focus:ring-4 focus:ring-amber-400/50 focus:outline-none"
               >
                 Bayar
               </button>
@@ -482,7 +483,7 @@ export default function POSPage() {
             
             <div className="mb-4">
               <p className="text-sm text-gray-600 mb-1">Total Pembayaran</p>
-              <p className="text-3xl font-bold text-blue-600">
+              <p className="text-3xl font-bold text-amber-600">
                 {formatCurrency(calculateTotal())}
               </p>
             </div>
@@ -503,10 +504,10 @@ export default function POSPage() {
                         setCashReceived(0);
                       }
                     }}
-                    className={`py-3 rounded-lg font-medium ${
+                    className={`py-3 rounded-lg font-medium focus:ring-4 focus:ring-amber-400/50 focus:outline-none ${
                       paymentMethod === method
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        ? 'bg-amber-600 text-white'
+                        : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
                     }`}
                   >
                     {method.toUpperCase()}
@@ -525,7 +526,7 @@ export default function POSPage() {
                     type="number"
                     value={cashReceived || ''}
                     onChange={(e) => setCashReceived(Number(e.target.value))}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg text-lg focus:ring-4 focus:ring-amber-400/50 focus:outline-none"
                     placeholder="0"
                   />
                 </div>
@@ -544,13 +545,13 @@ export default function POSPage() {
             <div className="flex gap-3">
               <button
                 onClick={() => setShowPaymentModal(false)}
-                className="flex-1 py-3 bg-gray-200 text-gray-700 hover:bg-gray-300 rounded-lg font-medium"
+                className="flex-1 py-3 bg-gray-200 text-gray-900 hover:bg-gray-300 rounded-lg font-medium focus:ring-4 focus:ring-gray-500/50 focus:outline-none"
               >
                 Batal
               </button>
               <button
                 onClick={processPayment}
-                className="flex-1 py-3 bg-blue-600 text-white hover:bg-blue-700 rounded-lg font-medium"
+                className="flex-1 py-3 bg-amber-600 text-white hover:bg-amber-700 rounded-lg font-medium focus:ring-4 focus:ring-amber-400/50 focus:outline-none"
               >
                 Proses
               </button>
@@ -613,7 +614,7 @@ export default function POSPage() {
 
             <button
               onClick={() => setShowReceipt(false)}
-              className="w-full py-3 bg-blue-600 text-white hover:bg-blue-700 rounded-lg font-medium"
+              className="w-full py-3 bg-amber-600 text-white hover:bg-amber-700 rounded-lg font-medium"
             >
               Transaksi Baru
             </button>

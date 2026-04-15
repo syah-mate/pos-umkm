@@ -161,7 +161,7 @@ export default function CustomersPage() {
             placeholder="🔍 Cari pelanggan (nama atau telepon)..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:ring-4 focus:ring-amber-400/50 focus:outline-none"
           />
         </div>
         <button
@@ -169,7 +169,7 @@ export default function CustomersPage() {
             resetForm();
             setShowModal(true);
           }}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+          className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium focus:ring-4 focus:ring-amber-400/50 focus:outline-none"
         >
           + Tambah Pelanggan
         </button>
@@ -177,30 +177,30 @@ export default function CustomersPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-        <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500">
-          <p className="text-gray-500 text-sm font-medium">Total Pelanggan</p>
-          <p className="text-3xl font-bold text-blue-600 mt-1">
+        <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-amber-500">
+          <p className="text-gray-700 text-sm font-medium">Total Pelanggan</p>
+          <p className="text-xl font-bold text-amber-600 mt-1">
             {customers.length}
           </p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500">
-          <p className="text-gray-500 text-sm font-medium">Total Poin</p>
-          <p className="text-3xl font-bold text-green-600 mt-1">
+        <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-green-500">
+          <p className="text-gray-700 text-sm font-medium">Total Poin</p>
+          <p className="text-xl font-bold text-green-600 mt-1">
             {customers.reduce((sum, c) => sum + c.loyaltyPoints, 0).toLocaleString()}
           </p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-purple-500">
-          <p className="text-gray-500 text-sm font-medium">Total Spent</p>
-          <p className="text-2xl font-bold text-purple-600 mt-1">
+        <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-purple-500">
+          <p className="text-gray-700 text-sm font-medium">Total Spent</p>
+          <p className="text-lg font-bold text-purple-600 mt-1">
             {formatCurrency(customers.reduce((sum, c) => sum + c.totalSpent, 0))}
           </p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-orange-500">
-          <p className="text-gray-500 text-sm font-medium">Total Transaksi</p>
-          <p className="text-3xl font-bold text-orange-600 mt-1">
+        <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-orange-500">
+          <p className="text-gray-700 text-sm font-medium">Total Transaksi</p>
+          <p className="text-xl font-bold text-orange-600 mt-1">
             {customers.reduce((sum, c) => sum + c.transactionCount, 0)}
           </p>
         </div>
@@ -242,7 +242,7 @@ export default function CustomersPage() {
                     <div>
                       <div className="font-semibold text-gray-900">{customer.name}</div>
                       {customer.address && (
-                        <div className="text-sm text-gray-500">{customer.address}</div>
+                        <div className="text-sm text-gray-700">{customer.address}</div>
                       )}
                     </div>
                   </td>
@@ -250,7 +250,7 @@ export default function CustomersPage() {
                     <div>
                       <div className="text-sm font-medium text-gray-900">{customer.phone}</div>
                       {customer.email && (
-                        <div className="text-sm text-gray-500">{customer.email}</div>
+                        <div className="text-sm text-gray-700">{customer.email}</div>
                       )}
                     </div>
                   </td>
@@ -268,11 +268,11 @@ export default function CustomersPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+                    <span className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-sm font-medium">
                       {customer.transactionCount}x
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                     {customer.lastVisit 
                       ? new Date(customer.lastVisit).toLocaleDateString('id-ID')
                       : '-'
@@ -281,13 +281,15 @@ export default function CustomersPage() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <button
                       onClick={() => handleEdit(customer)}
-                      className="text-blue-600 hover:text-blue-900 mr-3"
+                      className="text-amber-700 hover:text-amber-900 mr-3 focus:ring-2 focus:ring-amber-400/50 focus:outline-none rounded px-2 py-1"
+                      aria-label="Edit customer"
                     >
                       Edit
                     </button>
                     <button
                       onClick={() => handleDelete(customer._id)}
-                      className="text-red-600 hover:text-red-900"
+                      className="text-red-700 hover:text-red-900 focus:ring-2 focus:ring-red-500/50 focus:outline-none rounded px-2 py-1"
+                      aria-label="Delete customer"
                     >
                       Hapus
                     </button>
@@ -324,7 +326,7 @@ export default function CustomersPage() {
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-4 focus:ring-amber-400/50 focus:outline-none"
                 />
               </div>
 
@@ -338,7 +340,7 @@ export default function CustomersPage() {
                   value={formData.phone}
                   onChange={(e) => setFormData({...formData, phone: e.target.value})}
                   placeholder="08xxxxxxxxxx"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-4 focus:ring-amber-400/50 focus:outline-none"
                 />
               </div>
 
@@ -351,7 +353,7 @@ export default function CustomersPage() {
                   value={formData.email}
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
                   placeholder="email@example.com"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-4 focus:ring-amber-400/50 focus:outline-none"
                 />
               </div>
 
@@ -363,7 +365,7 @@ export default function CustomersPage() {
                   value={formData.address}
                   onChange={(e) => setFormData({...formData, address: e.target.value})}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-4 focus:ring-amber-400/50 focus:outline-none"
                 />
               </div>
 
@@ -374,13 +376,13 @@ export default function CustomersPage() {
                     setShowModal(false);
                     resetForm();
                   }}
-                  className="flex-1 py-2 bg-gray-200 text-gray-700 hover:bg-gray-300 rounded-lg font-medium"
+                  className="flex-1 py-2 bg-gray-200 text-gray-900 hover:bg-gray-300 rounded-lg font-medium focus:ring-4 focus:ring-gray-500/50 focus:outline-none"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg font-medium"
+                  className="flex-1 py-2 bg-amber-600 text-white hover:bg-amber-700 rounded-lg font-medium focus:ring-4 focus:ring-amber-400/50 focus:outline-none"
                 >
                   {editingCustomer ? 'Update' : 'Tambah'}
                 </button>

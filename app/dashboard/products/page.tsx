@@ -316,13 +316,13 @@ export default function ProductsPage() {
             placeholder="🔍 Cari produk..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:ring-4 focus:ring-amber-400/50 focus:outline-none"
           />
         </div>
         <div className="flex gap-2">
           <button
             onClick={() => setShowManageCategoryModal(true)}
-            className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"
+            className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition-colors font-medium focus:ring-4 focus:ring-gray-500/50 focus:outline-none"
           >
             📂 Kelola Kategori
           </button>
@@ -332,7 +332,7 @@ export default function ProductsPage() {
               setCategoryForm({ name: '', description: '', type: 'product' });
               setShowCategoryModal(true);
             }}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+            className="px-4 py-2 bg-purple-700 text-white rounded-lg hover:bg-purple-800 transition-colors font-medium focus:ring-4 focus:ring-purple-500/50 focus:outline-none"
           >
             + Kategori
           </button>
@@ -343,7 +343,7 @@ export default function ProductsPage() {
               loadCategories(); // Reload categories when opening modal
               setShowModal(true);
             }}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium focus:ring-4 focus:ring-amber-400/50 focus:outline-none"
           >
             + Tambah Produk
           </button>
@@ -354,10 +354,10 @@ export default function ProductsPage() {
       <div className="flex gap-2 mb-6 overflow-x-auto">
         <button
           onClick={() => setFilterCategory('')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap ${
-            filterCategory === ''
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap focus:ring-4 focus:ring-amber-400/50 focus:outline-none ${
+              filterCategory === ''
+                ? 'bg-amber-600 text-white'
+                : 'bg-gray-200 text-gray-900 hover:bg-gray-300'
           }`}
         >
           Semua ({products.length})
@@ -366,10 +366,10 @@ export default function ProductsPage() {
           <button
             key={category._id}
             onClick={() => setFilterCategory(category._id)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap ${
+            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap focus:ring-4 focus:ring-amber-400/50 focus:outline-none ${
               filterCategory === category._id
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                ? 'bg-amber-600 text-white'
+                : 'bg-gray-200 text-gray-900 hover:bg-gray-300'
             }`}
           >
             {category.name}
@@ -419,7 +419,7 @@ export default function ProductsPage() {
                     <div>
                       <div className="font-semibold text-gray-900">{product.name}</div>
                       {product.description && (
-                        <div className="text-sm text-gray-500">{product.description}</div>
+                        <div className="text-sm text-gray-700">{product.description}</div>
                       )}
                       {product.hasRecipe && (
                         <span className="inline-block mt-1 text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">
@@ -454,7 +454,7 @@ export default function ProductsPage() {
                       }`}>
                         {product.stock}
                       </span>
-                      <span className="text-gray-500 text-sm">
+                      <span className="text-gray-700 text-sm">
                         {product.unit}
                       </span>
                       {product.stock <= product.minStock && (
@@ -474,13 +474,15 @@ export default function ProductsPage() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <button
                       onClick={() => handleEdit(product)}
-                      className="text-blue-600 hover:text-blue-900 mr-3"
+                      className="text-blue-700 hover:text-blue-900 mr-3 focus:ring-2 focus:ring-blue-500/50 focus:outline-none rounded px-2 py-1"
+                      aria-label="Edit product"
                     >
                       Edit
                     </button>
                     <button
                       onClick={() => handleDelete(product._id)}
-                      className="text-red-600 hover:text-red-900"
+                      className="text-red-700 hover:text-red-900 focus:ring-2 focus:ring-red-500/50 focus:outline-none rounded px-2 py-1"
+                      aria-label="Delete product"
                     >
                       Hapus
                     </button>

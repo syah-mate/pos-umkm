@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Product from '@/models/Product';
+import Category from '@/models/Category';
 
 // Helper function to round stock to 2 decimal places
 function roundStock(value: number): number {

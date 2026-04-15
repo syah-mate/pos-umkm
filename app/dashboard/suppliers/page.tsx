@@ -160,7 +160,7 @@ export default function SuppliersPage() {
               resetForm();
               setShowModal(true);
             }}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium"
           >
             + Tambah Supplier
           </button>
@@ -173,19 +173,19 @@ export default function SuppliersPage() {
             placeholder="Cari supplier berdasarkan nama, telepon, atau contact person..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400"
           />
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-blue-600 font-medium">Total Supplier</p>
-                <p className="text-2xl font-bold text-blue-700 mt-1">{suppliers.length}</p>
+                <p className="text-sm text-amber-600 font-medium">Total Supplier</p>
+                <p className="text-2xl font-bold text-amber-700 mt-1">{suppliers.length}</p>
               </div>
-              <div className="bg-blue-100 rounded-full p-3">
+              <div className="bg-amber-100 rounded-full p-3">
                 <span className="text-2xl">🏢</span>
               </div>
             </div>
@@ -282,7 +282,7 @@ export default function SuppliersPage() {
                     <div className="flex gap-2">
                       <button
                         onClick={() => handleEdit(supplier)}
-                        className="text-blue-600 hover:text-blue-900 font-medium"
+                        className="text-amber-600 hover:text-amber-900 font-medium"
                       >
                         Edit
                       </button>

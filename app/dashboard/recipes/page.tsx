@@ -14,7 +14,7 @@ interface Product {
 
 interface Recipe {
   _id: string;
-  product: { _id: string; name: string; cost: number };
+  product: { _id: string; name: string; cost: number; price: number };
   portionSize: number;
   portionUnit: string;
   ingredients: Array<{
@@ -42,8 +42,6 @@ export default function RecipesPage() {
     portionSize: 1,
     portionUnit: 'pcs',
     yieldFactor: 1,
-    prepTime: 0,
-    cookTime: 0,
     ingredients: [] as Array<{
       product: string;
       quantity: number;
@@ -168,11 +166,9 @@ export default function RecipesPage() {
     setEditingRecipe(recipe);
     setFormData({
       product: recipe.product._id,
-      portionSize: recipe.portionSize,
-      portionUnit: recipe.portionUnit,
+      portionSize: 1,
+      portionUnit: 'pcs',
       yieldFactor: recipe.yieldFactor,
-      prepTime: recipe.prepTime || 0,
-      cookTime: recipe.cookTime || 0,
       ingredients: recipe.ingredients.map(ing => {
         const productId = typeof ing.product === 'string' 
           ? ing.product 
@@ -221,8 +217,6 @@ export default function RecipesPage() {
       portionSize: 1,
       portionUnit: 'pcs',
       yieldFactor: 1,
-      prepTime: 0,
-      cookTime: 0,
       ingredients: [],
     });
     setCurrentIngredient({
@@ -250,7 +244,7 @@ export default function RecipesPage() {
   };
 
   const calculateFoodCostPercentage = (recipe: Recipe) => {
-    return ((recipe.costPerPortion / recipe.product.cost) * 100).toFixed(1);
+    return ((recipe.costPerPortion / recipe.product.price) * 100).toFixed(1);
   };
 
   if (loading) {
@@ -263,7 +257,7 @@ export default function RecipesPage() {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Resep & BOM (Bill of Materials)</h1>
-          <p className="text-gray-600 text-sm mt-1">
+          <p className="text-gray-700 text-base mt-1">
             Kelola resep produk dan hitung HPP otomatis
           </p>
         </div>
@@ -272,28 +266,10 @@ export default function RecipesPage() {
             resetForm();
             setShowModal(true);
           }}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+          className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium focus:ring-4 focus:ring-amber-400/50 focus:outline-none"
         >
           + Tambah Resep
         </button>
-      </div>
-
-      {/* Info Box */}
-      <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded-lg">
-        <div className="flex items-start">
-          <div className="shrink-0">
-            <span className="text-2xl">💡</span>
-          </div>
-          <div className="ml-3">
-            <p className="text-sm font-medium text-blue-800">
-              Fitur Resep & BOM
-            </p>
-            <p className="text-xs text-blue-700 mt-1">
-              Saat transaksi, stok bahan baku akan terpotong otomatis berdasarkan resep. 
-              HPP dihitung otomatis dengan yield factor untuk memperhitungkan susut bahan.
-            </p>
-          </div>
-        </div>
       </div>
 
       {/* Recipes Grid */}
@@ -303,9 +279,7 @@ export default function RecipesPage() {
             {/* Header */}
             <div className="bg-linear-to-r from-orange-500 to-red-500 p-4 text-white">
               <h3 className="text-lg font-bold">{recipe.product.name}</h3>
-              <p className="text-sm text-orange-100">
-                {recipe.portionSize} {recipe.portionUnit}
-              </p>
+              <p className="text-sm text-orange-100">1 pcs</p>
             </div>
 
             {/* Body */}
@@ -330,11 +304,7 @@ export default function RecipesPage() {
               {/* Cost Details */}
               <div className="border-t pt-3 space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Total Cost:</span>
-                  <span className="font-semibold">{formatCurrency(recipe.totalCost)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Cost/Portion:</span>
+                  <span className="text-gray-600">HPP (Cost):</span>
                   <span className="font-bold text-orange-600">
                     {formatCurrency(recipe.costPerPortion)}
                   </span>
@@ -342,7 +312,7 @@ export default function RecipesPage() {
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Harga Jual:</span>
                   <span className="font-bold text-green-600">
-                    {formatCurrency(recipe.product.cost)}
+                    {formatCurrency(recipe.product.price)}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
@@ -355,35 +325,25 @@ export default function RecipesPage() {
                     {calculateFoodCostPercentage(recipe)}%
                   </span>
                 </div>
-                <div className="flex justify-between text-sm">
+                {/* <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Yield Factor:</span>
                   <span className="font-medium">{(recipe.yieldFactor * 100).toFixed(0)}%</span>
-                </div>
+                </div> */}
               </div>
-
-              {/* Time Info */}
-              {((recipe.prepTime && recipe.prepTime > 0) || (recipe.cookTime && recipe.cookTime > 0)) && (
-                <div className="border-t mt-3 pt-3 flex gap-4 text-xs text-gray-600">
-                  {recipe.prepTime && recipe.prepTime > 0 && (
-                    <div>⏱️ Prep: {recipe.prepTime} min</div>
-                  )}
-                  {recipe.cookTime && recipe.cookTime > 0 && (
-                    <div>🔥 Cook: {recipe.cookTime} min</div>
-                  )}
-                </div>
-              )}
 
               {/* Action Buttons */}
               <div className="border-t mt-3 pt-3 flex gap-2">
                 <button
                   onClick={() => handleEdit(recipe)}
-                  className="flex-1 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                  className="flex-1 px-3 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors text-sm font-medium focus:ring-4 focus:ring-amber-400/50 focus:outline-none"
+                  aria-label="Edit recipe"
                 >
                   ✏️ Edit
                 </button>
                 <button
                   onClick={() => handleDelete(recipe._id)}
-                  className="flex-1 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+                  className="flex-1 px-3 py-2 bg-red-700 text-white rounded-lg hover:bg-red-800 transition-colors text-sm font-medium focus:ring-4 focus:ring-red-500/50 focus:outline-none"
+                  aria-label="Delete recipe"
                 >
                   🗑️ Hapus
                 </button>
@@ -412,7 +372,7 @@ export default function RecipesPage() {
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Product Selection */}
               <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-gray-800 mb-3">1. Produk Akhir</h3>
+                <h3 className="font-semibold text-gray-800 mb-3">1. Produk Akhir (1 pcs)</h3>
                 <div className="grid grid-cols-3 gap-4">
                   <div className="col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -422,7 +382,7 @@ export default function RecipesPage() {
                       required
                       value={formData.product}
                       onChange={(e) => setFormData({...formData, product: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-4 focus:ring-blue-500/50 focus:outline-none"
                       disabled={products.length === 0}
                     >
                       <option value="">
@@ -457,49 +417,17 @@ export default function RecipesPage() {
                       step="0.1"
                       value={formData.yieldFactor}
                       onChange={(e) => setFormData({...formData, yieldFactor: parseFloat(e.target.value)})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-4 focus:ring-blue-500/50 focus:outline-none"
                       placeholder="1.0"
                     />
                     <p className="text-xs text-gray-500 mt-1">0.1-1.0 (susut)</p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4 mt-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Jumlah Porsi *
-                    </label>
-                    <input
-                      type="number"
-                      required
-                      min="1"
-                      value={formData.portionSize}
-                      onChange={(e) => setFormData({...formData, portionSize: parseInt(e.target.value)})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Unit Porsi *
-                    </label>
-                    <select
-                      required
-                      value={formData.portionUnit}
-                      onChange={(e) => setFormData({...formData, portionUnit: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="pcs">Pcs</option>
-                      <option value="porsi">Porsi</option>
-                      <option value="pack">Pack</option>
-                    </select>
                   </div>
                 </div>
               </div>
 
               {/* Ingredients */}
               <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-gray-800 mb-3">2. Bahan Baku</h3>
+                <h3 className="font-semibold text-gray-800 mb-3">2. Bahan Baku (untuk 1 pcs)</h3>
                 
                 {/* Add Ingredient Form */}
                 <div className="grid grid-cols-12 gap-2 mb-4">
@@ -581,38 +509,6 @@ export default function RecipesPage() {
                     ))}
                   </div>
                 )}
-              </div>
-
-              {/* Optional Fields */}
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-gray-800 mb-3">3. Info Tambahan (Opsional)</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Prep Time (menit)
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={formData.prepTime}
-                      onChange={(e) => setFormData({...formData, prepTime: parseInt(e.target.value)})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Cook Time (menit)
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={formData.cookTime}
-                      onChange={(e) => setFormData({...formData, cookTime: parseInt(e.target.value)})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                </div>
               </div>
 
               {/* Actions */}

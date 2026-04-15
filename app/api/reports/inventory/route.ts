@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Product from '@/models/Product';
+import Category from '@/models/Category';
 
 export async function GET() {
   try {
     await dbConnect();
+    
+    // Force Category model to be registered by executing a query
+    await Category.findOne({}).limit(1);
     
     // Get all products with stock status
     const products = await Product.find({ isActive: true })

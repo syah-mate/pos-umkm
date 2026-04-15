@@ -283,7 +283,7 @@ export default function InventoryPage() {
   const getStatusBadge = (status: string) => {
     const styles = {
       draft: 'bg-gray-100 text-gray-700',
-      sent: 'bg-blue-100 text-blue-700',
+      sent: 'bg-amber-100 text-amber-700',
       partial: 'bg-yellow-100 text-yellow-700',
       received: 'bg-green-100 text-green-700',
       cancelled: 'bg-red-100 text-red-700',
@@ -318,58 +318,58 @@ export default function InventoryPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-        <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-red-500">
+        <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-red-500">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-500 text-sm font-medium">Stok Rendah</p>
-              <p className="text-3xl font-bold text-red-600 mt-1">
+              <p className="text-gray-700 text-sm font-medium">Stok Rendah</p>
+              <p className="text-xl font-bold text-red-600 mt-1">
                 {lowStockProducts.length}
               </p>
             </div>
-            <div className="bg-red-100 rounded-full p-3">
-              <span className="text-3xl">⚠️</span>
+            <div className="bg-red-100 rounded-full p-2.5">
+              <span className="text-2xl">⚠️</span>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-yellow-500">
+        <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-yellow-500">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-500 text-sm font-medium">PO Pending</p>
-              <p className="text-3xl font-bold text-yellow-600 mt-1">
+              <p className="text-gray-700 text-sm font-medium">PO Pending</p>
+              <p className="text-xl font-bold text-yellow-600 mt-1">
                 {purchaseOrders.filter(po => po.status === 'sent' || po.status === 'partial').length}
               </p>
             </div>
-            <div className="bg-yellow-100 rounded-full p-3">
-              <span className="text-3xl">📋</span>
+            <div className="bg-yellow-100 rounded-full p-2.5">
+              <span className="text-2xl">📋</span>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500">
+        <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-green-500">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-500 text-sm font-medium">PO Selesai</p>
-              <p className="text-3xl font-bold text-green-600 mt-1">
+              <p className="text-gray-700 text-sm font-medium">PO Selesai</p>
+              <p className="text-xl font-bold text-green-600 mt-1">
                 {purchaseOrders.filter(po => po.status === 'received').length}
               </p>
             </div>
-            <div className="bg-green-100 rounded-full p-3">
-              <span className="text-3xl">✅</span>
+            <div className="bg-green-100 rounded-full p-2.5">
+              <span className="text-2xl">✅</span>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500">
+        <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-amber-500">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-500 text-sm font-medium">Total PO</p>
-              <p className="text-3xl font-bold text-blue-600 mt-1">
+              <p className="text-gray-700 text-sm font-medium">Total PO</p>
+              <p className="text-xl font-bold text-amber-600 mt-1">
                 {purchaseOrders.length}
               </p>
             </div>
-            <div className="bg-blue-100 rounded-full p-3">
-              <span className="text-3xl">📦</span>
+            <div className="bg-amber-100 rounded-full p-2.5">
+              <span className="text-2xl">📦</span>
             </div>
           </div>
         </div>
@@ -421,7 +421,7 @@ export default function InventoryPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-gray-600">
+                      <span className="text-gray-700">
                         {product.minStock} {product.unit}
                       </span>
                     </td>
@@ -445,7 +445,7 @@ export default function InventoryPage() {
           <div className="flex gap-2">
             <button
               onClick={() => router.push('/dashboard/suppliers')}
-              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"
+              className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition-colors font-medium focus:ring-4 focus:ring-gray-500/50 focus:outline-none"
             >
               🏢 Atur Supplier
             </button>
@@ -455,7 +455,7 @@ export default function InventoryPage() {
                 resetPOForm();
                 setShowPOModal(true);
               }}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              className="px-4 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-800 transition-colors font-medium focus:ring-4 focus:ring-blue-500/50 focus:outline-none"
             >
               + Create PO
             </button>
