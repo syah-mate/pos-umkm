@@ -1,6 +1,7 @@
 import mongoose, { Document, Model, Schema } from 'mongoose';
 
 export interface IShift extends Document {
+  shiftName: string;
   cashier: mongoose.Types.ObjectId;
   cashierName: string;
   startTime: Date;
@@ -19,6 +20,10 @@ export interface IShift extends Document {
 
 const ShiftSchema = new Schema<IShift>(
   {
+    shiftName: {
+      type: String,
+      required: true,
+    },
     cashier: {
       type: Schema.Types.ObjectId,
       ref: 'User',

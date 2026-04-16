@@ -10,8 +10,7 @@ export async function GET(request: NextRequest) {
     const suppliers = await Supplier.find({ isActive: true }).sort({ name: 1 });
 
     return NextResponse.json({
-      success: true,
-      suppliers,
+      data: suppliers,
     });
   } catch (error: any) {
     console.error('Error fetching suppliers:', error);

@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
       .sort({ name: 1 })
       .limit(100);
     
-    return NextResponse.json({ customers }, { status: 200 });
+    return NextResponse.json({ data: customers }, { status: 200 });
   } catch (error: any) {
     console.error('Get customers error:', error);
     return NextResponse.json(

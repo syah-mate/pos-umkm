@@ -26,12 +26,21 @@ interface Customer {
   phone: string;
 }
 
+interface Shift {
+  _id: string;
+  shiftName: string;
+  cashierName: string;
+  startTime: string;
+  status: 'open' | 'closed';
+}
+
 export default function POSPage() {
   const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [activeShift, setActiveShift] = useState<Shift | null>(null);
   
   const [cart, setCart] = useState<CartItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -55,7 +64,25 @@ export default function POSPage() {
     loadProducts();
     loadCategories();
     loadCustomers();
+    loadActiveShift();
   }, []);
+
+  const loadActiveShift = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/shifts?status=open', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const shifts = data.data || [];
+        setActiveShift(shifts.length > 0 ? shifts[0] : null);
+      }
+    } catch (error) {
+      console.error('Error loading active shift:', error);
+    }
+  };
 
   const loadProducts = async () => {
     try {
@@ -122,6 +149,11 @@ export default function POSPage() {
   }, [selectedCategory]);
 
   const addToCart = (product: Product) => {
+    if (!activeShift) {
+      alert('Tidak ada shift aktif! Silakan buka shift terlebih dahulu.');
+      return;
+    }
+
     if (product.stock <= 0) {
       alert('Stok produk habis!');
       return;
@@ -269,6 +301,51 @@ export default function POSPage() {
     <div className="flex gap-6 h-[calc(100vh-12rem)]">
       {/* Left Panel - Products */}
       <div className="flex-1 flex flex-col bg-white rounded-xl shadow-md overflow-hidden">
+        {/* Shift Status Banner */}
+        <div className={`p-4 border-b ${activeShift ? 'bg-green-50' : 'bg-red-50'}`}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">{activeShift ? '✅' : '🔒'}</span>
+              <div>
+                <h3 className={`font-bold ${activeShift ? 'text-green-800' : 'text-red-800'}`}>
+                  Status Shift: {activeShift ? 'Buka' : 'Tutup'}
+                </h3>
+                <p className={`text-sm ${activeShift ? 'text-green-600' : 'text-red-600'}`}>
+                  {activeShift ? (
+                    <>
+                      Kasir: <span className="font-semibold">{activeShift.cashierName}</span> | 
+                      Dibuka: <span className="font-semibold">
+                        {new Date(activeShift.startTime).toLocaleString('id-ID', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </span>
+                    </>
+                  ) : (
+                    <>Kasir: - | Dibuka: -</>
+                  )}
+                </p>
+                {!activeShift && (
+                  <p className="text-xs text-red-500 mt-1">
+                    ⚠️ Produk tidak dapat dipilih. Silakan buka shift terlebih dahulu.
+                  </p>
+                )}
+              </div>
+            </div>
+            {!activeShift && (
+              <button
+                onClick={() => router.push('/dashboard/shifts')}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium text-sm"
+              >
+                Buka Shift
+              </button>
+            )}
+          </div>
+        </div>
+
         {/* Search & Filter */}
         <div className="p-4 border-b bg-gray-50">
           <input
@@ -313,9 +390,9 @@ export default function POSPage() {
               <button
                 key={product._id}
                 onClick={() => addToCart(product)}
-                disabled={product.stock <= 0}
+                disabled={!activeShift || product.stock <= 0}
                 className={`text-left p-4 rounded-lg border-2 transition-all ${
-                  product.stock <= 0
+                  !activeShift || product.stock <= 0
                     ? 'bg-gray-100 border-gray-200 opacity-50 cursor-not-allowed'
                     : 'bg-white border-gray-200 hover:border-amber-500 hover:shadow-lg'
                 }`}

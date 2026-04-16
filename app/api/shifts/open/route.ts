@@ -27,12 +27,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Generate shift name: "nama_tanggal dan jam"
+    // Example: "admin_16 Apr 2026, 09.30"
+    const now = new Date();
+    const formattedDate = now.toLocaleDateString('id-ID', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+    const formattedTime = now.toLocaleTimeString('id-ID', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+    const shiftName = `${body.cashierName}_${formattedDate}, ${formattedTime}`;
+
     const shift = await Shift.create({
+      shiftName,
       cashier: body.cashier,
       cashierName: body.cashierName,
       startingCash: body.startingCash,
-      startTime: new Date(),
+      startTime: now,
       status: 'open',
+      notes: body.notes,
     });
 
     return NextResponse.json(

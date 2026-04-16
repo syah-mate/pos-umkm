@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 
 interface Shift {
   _id: string;
+  shiftName: string;
   cashier: { _id: string; name: string };
   cashierName: string;
   startTime: string;
@@ -243,6 +244,9 @@ export default function ShiftsPage() {
             <thead className="bg-gray-50 border-b">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Nama Shift
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Kasir
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
@@ -271,6 +275,9 @@ export default function ShiftsPage() {
             <tbody className="divide-y divide-gray-200">
               {shifts.map(shift => (
                 <tr key={shift._id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4">
+                    <div className="font-semibold text-gray-900">{shift.shiftName || '-'}</div>
+                  </td>
                   <td className="px-6 py-4">
                     <div className="font-semibold text-gray-900">{shift.cashierName}</div>
                   </td>

@@ -26,6 +26,7 @@ export interface ITransaction extends Document {
   cashier:  mongoose.Types.ObjectId;
   cashierName: string;
   shift?: mongoose.Types.ObjectId;
+  shiftName?: string;
   notes?: string;
   isSynced: boolean;
   syncedAt?: Date;
@@ -132,6 +133,9 @@ const TransactionSchema = new Schema<ITransaction>(
     shift: {
       type: Schema.Types.ObjectId,
       ref: 'Shift',
+    },
+    shiftName: {
+      type: String,
     },
     notes: {
       type: String,

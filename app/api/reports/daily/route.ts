@@ -66,17 +66,17 @@ export async function GET(request: NextRequest) {
     });
     
     return NextResponse.json({
-      date,
-      summary: {
+      data: {
+        date,
         totalSales,
         totalTransactions,
         totalItems,
         averageTransaction: totalTransactions > 0 ? totalSales / totalTransactions : 0,
-      },
-      paymentBreakdown,
-      topProducts,
-      hourlySales,
-      transactions: transactions.slice(0, 20), // Last 20 transactions
+        paymentBreakdown,
+        topProducts,
+        hourlySales,
+        transactions: transactions.slice(0, 20), // Last 20 transactions
+      }
     }, { status: 200 });
   } catch (error: any) {
     console.error('Daily report error:', error);

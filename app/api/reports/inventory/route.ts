@@ -26,17 +26,17 @@ export async function GET() {
     const totalRetailValue = products.reduce((sum, p) => sum + (p.stock * p.price), 0);
     
     return NextResponse.json({
-      summary: {
+      data: {
         totalProducts: products.length,
         lowStockCount: lowStockProducts.length,
         outOfStockCount: outOfStockProducts.length,
         totalStockValue,
         totalRetailValue,
         potentialProfit: totalRetailValue - totalStockValue,
-      },
-      lowStockProducts,
-      outOfStockProducts,
-      allProducts: products,
+        lowStock: lowStockProducts,
+        outOfStock: outOfStockProducts,
+        allProducts: products,
+      }
     }, { status: 200 });
   } catch (error: any) {
     console.error('Inventory report error:', error);

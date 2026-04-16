@@ -5,6 +5,7 @@ import Product from '@/models/Product';
 import Customer from '@/models/Customer';
 import Recipe from '@/models/Recipe';
 import User from '@/models/User';
+import Shift from '@/models/Shift';
 
 // Unit conversion helper function
 function convertUnit(quantity: number, fromUnit: string, toUnit: string): number {
@@ -76,9 +77,17 @@ export async function GET(request: NextRequest) {
     const query: any = {};
     
     if (startDate && endDate) {
+      // Set start date to beginning of day
+      const start = new Date(startDate);
+      start.setHours(0, 0, 0, 0);
+      
+      // Set end date to end of day (23:59:59.999)
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      
       query.createdAt = {
-        $gte: new Date(startDate),
-        $lte: new Date(endDate),
+        $gte: start,
+        $lte: end,
       };
     }
     
@@ -96,7 +105,7 @@ export async function GET(request: NextRequest) {
       .sort({ createdAt: -1 })
       .limit(100);
     
-    return NextResponse.json({ transactions }, { status: 200 });
+    return NextResponse.json({ data: transactions }, { status: 200 });
   } catch (error: any) {
     console.error('Get transactions error:', error);
     return NextResponse.json(
@@ -228,14 +237,32 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Find active shift for this cashier
+    let activeShift = null;
+    if (body.cashier) {
+      activeShift = await Shift.findOne({
+        cashier: body.cashier,
+        status: 'open',
+      });
+    }
+
     // Create transaction
     const transaction = await Transaction.create({
       ...body,
       invoiceNumber,
+      shift: activeShift?._id, // Link to active shift
+      shiftName: activeShift?.shiftName, // Save shift name
       paymentStatus: 'paid',
       isSynced: true,
       syncedAt: new Date(),
     });
+
+    // Update shift counters
+    if (activeShift) {
+      activeShift.totalTransactions += 1;
+      activeShift.totalSales += body.total;
+      await activeShift.save();
+    }
 
     // Ensure User model is registered before populate
     await User.init();

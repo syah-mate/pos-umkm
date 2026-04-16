@@ -272,6 +272,32 @@ export default function InventoryPage() {
     }
   };
 
+  const handleCancelPO = async (id: string) => {
+    if (!confirm('Yakin ingin membatalkan PO ini?')) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/purchase-orders/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status: 'cancelled' }),
+      });
+
+      if (response.ok) {
+        alert('PO berhasil dibatalkan!');
+        loadData();
+      } else {
+        alert('Gagal membatalkan PO!');
+      }
+    } catch (error) {
+      console.error('Error cancelling PO:', error);
+      alert('Terjadi kesalahan!');
+    }
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
@@ -519,7 +545,7 @@ export default function InventoryPage() {
                             setSelectedPO(po);
                             setShowReceiveModal(true);
                           }}
-                          className="text-green-600 hover:text-green-900 font-medium"
+                          className="text-green-600 hover:text-green-900 font-medium text-sm"
                         >
                           Terima
                         </button>
@@ -528,17 +554,25 @@ export default function InventoryPage() {
                         <>
                           <button
                             onClick={() => handleEditPO(po)}
-                            className="text-blue-600 hover:text-blue-900 font-medium"
+                            className="text-blue-600 hover:text-blue-900 font-medium text-sm"
                           >
                             Edit
                           </button>
                           <button
                             onClick={() => handleDeletePO(po._id)}
-                            className="text-red-600 hover:text-red-900 font-medium"
+                            className="text-red-600 hover:text-red-900 font-medium text-sm"
                           >
                             Hapus
                           </button>
                         </>
+                      )}
+                      {(po.status === 'draft' || po.status === 'sent') && (
+                        <button
+                          onClick={() => handleCancelPO(po._id)}
+                          className="text-orange-600 hover:text-orange-900 font-medium text-sm"
+                        >
+                          Batal
+                        </button>
                       )}
                     </div>
                   </td>
@@ -647,9 +681,6 @@ export default function InventoryPage() {
                   >
                     <option value="draft">Draft</option>
                     <option value="sent">Sent</option>
-                    <option value="partial">Partial</option>
-                    <option value="received">Received</option>
-                    <option value="cancelled">Cancelled</option>
                   </select>
                 </div>
               </div>

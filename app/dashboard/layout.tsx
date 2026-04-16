@@ -18,6 +18,11 @@ const menuItems = [
     highlight: true
   },
   { 
+    name: 'Riwayat Transaksi', 
+    icon: '🧾', 
+    path: '/dashboard/transactions'
+  },
+  { 
     name: 'Produk', 
     icon: '📦', 
     path: '/dashboard/products'
@@ -26,6 +31,11 @@ const menuItems = [
     name: 'Purchase Orders', 
     icon: '📋', 
     path: '/dashboard/inventory'
+  },
+  { 
+    name: 'Stok Opname', 
+    icon: '📋', 
+    path: '/dashboard/inventory/stock-opname'
   },
   { 
     name: 'Pelanggan', 
@@ -104,7 +114,7 @@ export default function DashboardLayout({
         {/* Logo */}
         <div className="py-4 px-2 border-b border-stone-200 flex items-center justify-center">
           <Image 
-            src="/logo.png" 
+            src="/rsz_logo.png" 
             alt="Lentera POS" 
             width={800} 
             height={200}
@@ -116,7 +126,9 @@ export default function DashboardLayout({
         {/* Navigation */}
         <nav className="p-3 overflow-y-auto h-[calc(100vh-152px)]">
           {menuItems.map((item) => {
-            const isActive = pathname === item.path;
+            const isActive = item.path === '/dashboard/inventory/stock-opname'
+              ? pathname.startsWith('/dashboard/inventory/stock-opname')
+              : pathname === item.path;
             return (
               <Link
                 key={item.path}

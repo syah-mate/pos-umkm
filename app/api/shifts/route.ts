@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
       .sort({ startTime: -1 })
       .limit(50);
     
-    return NextResponse.json({ shifts }, { status: 200 });
+    return NextResponse.json({ data: shifts }, { status: 200 });
   } catch (error: any) {
     console.error('Get shifts error:', error);
     return NextResponse.json(
