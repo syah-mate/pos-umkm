@@ -10,10 +10,6 @@ interface DashboardStats {
   totalProducts: number;
   lowStockProducts: number;
   totalCustomers: number;
-  activeShift: {
-    cashierName: string;
-    startTime: string;
-  } | null;
 }
 
 export default function Dashboard() {
@@ -24,7 +20,6 @@ export default function Dashboard() {
     totalProducts: 0,
     lowStockProducts: 0,
     totalCustomers: 0,
-    activeShift: null,
   });
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -95,24 +90,6 @@ export default function Dashboard() {
         }));
       }
 
-      // Fetch active shifts
-      const shiftsRes = await fetch('/api/shifts?status=open', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      
-      if (shiftsRes.ok) {
-        const shiftsData = await shiftsRes.json();
-        const activeShift = shiftsData.data?.[0];
-        if (activeShift) {
-          setStats(prev => ({
-            ...prev,
-            activeShift: {
-              cashierName: activeShift.cashierName,
-              startTime: activeShift.startTime,
-            },
-          }));
-        }
-      }
     } catch (error) {
       console.error('Error loading dashboard stats:', error);
     }
@@ -141,25 +118,6 @@ export default function Dashboard() {
         <h1 className="text-2xl font-bold mb-1 text-amber-900">Selamat Datang, {user?.name}! 👋</h1>
         <p className="text-stone-700 text-sm">Berikut ringkasan bisnis Anda hari ini</p>
       </div>
-
-      {/* Active Shift Alert */}
-      {stats.activeShift && (
-        <div className="bg-green-50 border-l-4 border-green-600 p-4 mb-6 rounded-lg" role="status" aria-live="polite">
-          <div className="flex items-center">
-            <div className="shrink-0">
-              <span className="text-2xl" aria-hidden="true">✅</span>
-            </div>
-            <div className="ml-3">
-              <p className="text-base font-semibold text-green-800">
-                Shift Aktif - {stats.activeShift.cashierName}
-              </p>
-              <p className="text-sm text-green-800 mt-1">
-                Mulai: {new Date(stats.activeShift.startTime).toLocaleString('id-ID')}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

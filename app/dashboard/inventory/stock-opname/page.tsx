@@ -233,11 +233,11 @@ export default function StockOpnamePage() {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Stok Opname</h1>
+        <p className="text-gray-600 text-sm">Hitung stok fisik dan catat selisihnya</p>
         {userRole === 'admin' && (
           <button
             onClick={() => setShowModal(true)}
-            className="px-4 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-800 transition-colors font-medium focus:ring-4 focus:ring-blue-500/50 focus:outline-none"
+            className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium focus:ring-4 focus:ring-amber-400/50 focus:outline-none"
           >
             📋 Buka Sesi Baru
           </button>
@@ -320,7 +320,7 @@ export default function StockOpnamePage() {
                       </div>
                       <div className="w-24 bg-gray-200 rounded-full h-2 mt-1">
                         <div 
-                          className="bg-blue-600 h-2 rounded-full"
+                          className="bg-amber-600 h-2 rounded-full"
                           style={{ width: `${(session.countedItems / session.totalItems) * 100}%` }}
                         />
                       </div>
@@ -339,7 +339,7 @@ export default function StockOpnamePage() {
                       <div className="flex flex-wrap gap-2">
                         <button
                           onClick={() => router.push(`/dashboard/inventory/stock-opname/${session._id}`)}
-                          className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+                          className="px-3 py-1 bg-amber-600 text-white rounded hover:bg-amber-600 text-sm"
                         >
                           Lihat Detail
                         </button>
@@ -397,7 +397,7 @@ export default function StockOpnamePage() {
                     type="text"
                     value={formData.sessionName}
                     onChange={(e) => setFormData({ ...formData, sessionName: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-blue-500"
                     placeholder="Contoh: Opname Akhir Bulan Januari 2026"
                     required
                   />
@@ -411,7 +411,7 @@ export default function StockOpnamePage() {
                     <button
                       type="button"
                       onClick={handleSelectAllCategories}
-                      className="text-sm text-blue-600 hover:text-blue-800"
+                      className="text-sm text-amber-700 hover:text-amber-900"
                     >
                       Semua Kategori
                     </button>
@@ -447,7 +447,7 @@ export default function StockOpnamePage() {
                   <textarea
                     value={formData.notes}
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-blue-500"
                     rows={3}
                     placeholder="Tambahkan catatan jika diperlukan"
                   />
@@ -466,7 +466,7 @@ export default function StockOpnamePage() {
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-800 transition-colors font-medium"
+                    className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium"
                   >
                     Buka Sesi
                   </button>

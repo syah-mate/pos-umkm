@@ -5,59 +5,57 @@ import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 
-const menuItems = [
-  { 
-    name: 'Dashboard', 
-    icon: '📊', 
-    path: '/dashboard'
+interface MenuItem {
+  name: string;
+  icon: string;
+  path: string;
+  highlight?: boolean;
+}
+
+const menuGroups: { title?: string; items: MenuItem[] }[] = [
+  {
+    items: [
+      { name: 'Dashboard', icon: '📊', path: '/dashboard' },
+    ],
   },
-  { 
-    name: 'Kasir', 
-    icon: '🛒', 
-    path: '/dashboard/pos',
-    highlight: true
+  {
+    title: 'Data Master',
+    items: [
+      { name: 'Gudang', icon: '🏭', path: '/dashboard/warehouses' },
+      { name: 'Produk', icon: '📦', path: '/dashboard/products' },
+      { name: 'Kendaraan', icon: '🚚', path: '/dashboard/vehicles' },
+      { name: 'Pelanggan', icon: '👥', path: '/dashboard/customers' },
+      { name: 'Supplier', icon: '🤝', path: '/dashboard/suppliers' },
+    ],
   },
-  { 
-    name: 'Riwayat Transaksi', 
-    icon: '🧾', 
-    path: '/dashboard/transactions'
+  {
+    title: 'Operasional',
+    items: [
+      { name: 'Kasir', icon: '🛒', path: '/dashboard/pos' },
+      { name: 'Riwayat Transaksi', icon: '🧾', path: '/dashboard/transactions' },
+      { name: 'Plan Pengiriman', icon: '🗺️', path: '/dashboard/deliveries' },
+      { name: 'Purchase Orders', icon: '📋', path: '/dashboard/inventory' },
+      { name: 'Stok Opname', icon: '📝', path: '/dashboard/inventory/stock-opname' },
+    ],
   },
-  { 
-    name: 'Produk', 
-    icon: '📦', 
-    path: '/dashboard/products'
-  },
-  { 
-    name: 'Purchase Orders', 
-    icon: '📋', 
-    path: '/dashboard/inventory'
-  },
-  { 
-    name: 'Stok Opname', 
-    icon: '📋', 
-    path: '/dashboard/inventory/stock-opname'
-  },
-  { 
-    name: 'Pelanggan', 
-    icon: '👥', 
-    path: '/dashboard/customers'
-  },
-  { 
-    name: 'Resep & BOM', 
-    icon: '🍳', 
-    path: '/dashboard/recipes'
-  },
-  { 
-    name: 'Laporan', 
-    icon: '📈', 
-    path: '/dashboard/reports'
-  },
-  { 
-    name: 'Shift', 
-    icon: '🕐', 
-    path: '/dashboard/shifts'
+  {
+    title: 'Lainnya',
+    items: [
+      { name: 'Laporan', icon: '📈', path: '/dashboard/reports' },
+    ],
   },
 ];
+
+const allMenuItems = menuGroups.flatMap((group) => group.items);
+
+// Longest matching menu path wins, so nested pages (e.g. /deliveries/123) highlight their parent
+function findActiveItem(pathname: string): MenuItem | undefined {
+  return allMenuItems
+    .filter((item) =>
+      item.path === '/dashboard' ? pathname === item.path : pathname === item.path || pathname.startsWith(item.path + '/')
+    )
+    .sort((a, b) => b.path.length - a.path.length)[0];
+}
 
 export default function DashboardLayout({
   children,
@@ -65,6 +63,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const activeItem = findActiveItem(pathname);
   const router = useRouter();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [userName, setUserName] = useState('User');
@@ -125,34 +124,38 @@ export default function DashboardLayout({
 
         {/* Navigation */}
         <nav className="p-3 overflow-y-auto h-[calc(100vh-152px)]">
-          {menuItems.map((item) => {
-            const isActive = item.path === '/dashboard/inventory/stock-opname'
-              ? pathname.startsWith('/dashboard/inventory/stock-opname')
-              : pathname === item.path;
-            return (
-              <Link
-                key={item.path}
-                href={item.path}
-                aria-current={isActive ? 'page' : undefined}
-                className={`
-                  flex items-start gap-2 px-3 py-2 rounded-lg mb-1.5 transition-all focus:ring-2 focus:ring-amber-400 focus:outline-none
-                  ${isActive 
-                    ? 'bg-amber-100 text-amber-900 shadow-sm font-semibold border border-amber-200' 
-                    : 'hover:bg-stone-100 text-gray-700 hover:text-gray-900'
-                  }
-                  ${item.highlight ? 'ring-1 ring-amber-300' : ''}
-                `}
-              >
-                <span className="text-lg" aria-hidden="true">{item.icon}</span>
-                <div className="flex-1">
-                  <div className="font-semibold text-sm">{item.name}</div>
-                  {/* <div className={`text-xs ${isActive ? 'text-amber-700' : 'text-stone-500'}`}>
-                    {item.description}
-                  </div> */}
+          {menuGroups.map((group, groupIdx) => (
+            <div key={group.title || groupIdx} className="mb-3">
+              {group.title && (
+                <div className="px-3 pt-2 pb-1 text-[11px] font-bold uppercase tracking-wider text-stone-500">
+                  {group.title}
                 </div>
-              </Link>
-            );
-          })}
+              )}
+              {group.items.map((item) => {
+                const isActive = activeItem?.path === item.path;
+                return (
+                  <Link
+                    key={item.path}
+                    href={item.path}
+                    aria-current={isActive ? 'page' : undefined}
+                    className={`
+                      flex items-start gap-2 px-3 py-2 rounded-lg mb-1 transition-all focus:ring-2 focus:ring-amber-400 focus:outline-none
+                      ${isActive 
+                        ? 'bg-amber-100 text-amber-900 shadow-sm font-semibold border border-amber-200' 
+                        : 'hover:bg-stone-100 text-gray-700 hover:text-gray-900'
+                      }
+                      ${item.highlight ? 'ring-1 ring-amber-300' : ''}
+                    `}
+                  >
+                    <span className="text-lg" aria-hidden="true">{item.icon}</span>
+                    <div className="flex-1">
+                      <div className="font-semibold text-sm">{item.name}</div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
         </nav>
 
         {/* User Profile */}
@@ -212,11 +215,8 @@ export default function DashboardLayout({
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-lg font-bold text-gray-900">
-                {menuItems.find(item => item.path === pathname)?.name || 'Dashboard'}
+                {activeItem?.name || 'Dashboard'}
               </h2>
-              {/* <p className="text-xs text-gray-700">
-                {menuItems.find(item => item.path === pathname)?.description || 'Welcome back'}
-              </p> */}
             </div>
             <div className="flex items-center gap-4">
               <div className="text-right">

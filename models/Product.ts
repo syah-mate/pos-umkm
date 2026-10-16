@@ -1,12 +1,15 @@
 import mongoose, { Document, Model, Schema } from 'mongoose';
 // Import Category to ensure it's registered before Product
 import Category from './Category';
+import './Warehouse';
 
 export interface IProduct extends Document {
   sku: string;
   name: string;
   description?: string;
-  category: mongoose.Types.ObjectId;
+  category?: mongoose.Types.ObjectId;
+  sizeType: 'besar' | 'medium' | 'kecil';
+  warehouse?: mongoose.Types.ObjectId;
   price: number;
   cost: number;
   stock: number;
@@ -15,7 +18,6 @@ export interface IProduct extends Document {
   barcode?: string;
   image?: string;
   isActive: boolean;
-  hasRecipe: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -40,7 +42,16 @@ const ProductSchema = new Schema<IProduct>(
     category: {
       type: Schema.Types.ObjectId,
       ref: 'Category',
-      required: [true, 'Category is required'],
+    },
+    // Tipe ukuran barang, dipakai untuk menghitung muatan kendaraan
+    sizeType: {
+      type: String,
+      enum: ['besar', 'medium', 'kecil'],
+      default: 'kecil',
+    },
+    warehouse: {
+      type: Schema.Types.ObjectId,
+      ref: 'Warehouse',
     },
     price: {
       type: Number,
@@ -65,7 +76,7 @@ const ProductSchema = new Schema<IProduct>(
     unit: {
       type: String,
       required: [true, 'Unit is required'],
-      enum: ['pcs', 'kg', 'gram', 'liter', 'ml', 'box', 'pack'],
+      enum: ['pcs', 'kg', 'gram', 'liter', 'ml', 'box', 'pack', 'dus', 'karton', 'sak', 'bal', 'lusin'],
       default: 'pcs',
     },
     barcode: {
@@ -80,10 +91,6 @@ const ProductSchema = new Schema<IProduct>(
       type: Boolean,
       default: true,
     },
-    hasRecipe: {
-      type: Boolean,
-      default: false,
-    },
   },
   {
     timestamps: true,
@@ -93,6 +100,7 @@ const ProductSchema = new Schema<IProduct>(
 // Index for better search performance
 ProductSchema.index({ name: 'text', sku: 'text', barcode: 'text' });
 ProductSchema.index({ category: 1 });
+ProductSchema.index({ warehouse: 1 });
 
 const Product: Model<IProduct> =
   mongoose.models.Product || mongoose.model<IProduct>('Product', ProductSchema);

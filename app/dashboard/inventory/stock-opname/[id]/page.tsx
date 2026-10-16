@@ -290,7 +290,7 @@ export default function StockOpnameDetailPage() {
           <div>
             <button
               onClick={() => router.push('/dashboard/inventory/stock-opname')}
-              className="text-blue-600 hover:text-blue-800 text-sm mb-2"
+              className="text-amber-700 hover:text-amber-900 text-sm mb-2"
             >
               ← Kembali ke Daftar Sesi
             </button>
@@ -350,7 +350,7 @@ export default function StockOpnameDetailPage() {
           </div>
           <div className="w-full bg-gray-200 rounded-full h-3">
             <div 
-              className="bg-blue-600 h-3 rounded-full transition-all"
+              className="bg-amber-600 h-3 rounded-full transition-all"
               style={{ width: `${(session.countedItems / session.totalItems) * 100}%` }}
             />
           </div>
@@ -365,7 +365,7 @@ export default function StockOpnameDetailPage() {
               onClick={() => setFilter('all')}
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                 filter === 'all' 
-                  ? 'bg-blue-700 text-white' 
+                  ? 'bg-amber-600 text-white' 
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
               }`}
             >
@@ -375,7 +375,7 @@ export default function StockOpnameDetailPage() {
               onClick={() => setFilter('uncounted')}
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                 filter === 'uncounted' 
-                  ? 'bg-blue-700 text-white' 
+                  ? 'bg-amber-600 text-white' 
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
               }`}
             >
@@ -385,7 +385,7 @@ export default function StockOpnameDetailPage() {
               onClick={() => setFilter('diff')}
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                 filter === 'diff' 
-                  ? 'bg-blue-700 text-white' 
+                  ? 'bg-amber-600 text-white' 
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
               }`}
             >
@@ -398,7 +398,7 @@ export default function StockOpnameDetailPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Cari produk atau SKU..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-blue-500"
             />
           </div>
         </div>
@@ -482,7 +482,7 @@ export default function StockOpnameDetailPage() {
                               ...localCounts,
                               [item._id]: e.target.value === '' ? '' : Number(e.target.value)
                             })}
-                            className="w-24 px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                            className="w-24 px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-amber-500"
                             placeholder="0"
                           />
                         ) : (
@@ -506,7 +506,7 @@ export default function StockOpnameDetailPage() {
                                   ...localReasons,
                                   [item._id]: e.target.value
                                 })}
-                                className="px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500"
+                                className="px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-amber-500"
                               >
                                 <option value="">Pilih alasan</option>
                                 <option value="susut_kadaluarsa">Susut/Kadaluarsa</option>
@@ -524,7 +524,7 @@ export default function StockOpnameDetailPage() {
                               <button
                                 onClick={() => handleSaveItem(item)}
                                 disabled={savingItemId === item._id}
-                                className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm disabled:bg-gray-400"
+                                className="px-3 py-1 bg-amber-600 text-white rounded hover:bg-amber-600 text-sm disabled:bg-gray-400"
                               >
                                 {savingItemId === item._id ? 'Menyimpan...' : 'Simpan'}
                               </button>

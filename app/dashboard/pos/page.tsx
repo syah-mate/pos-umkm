@@ -2,6 +2,18 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import {
+  PAYMENT_STATUS_BADGES,
+  PAYMENT_STATUS_LABELS,
+  SIZE_BADGES,
+  SIZE_LABELS,
+  SIZE_TYPES,
+  SizeType,
+  computePaymentStatus,
+  formatCurrency,
+  formatNumberWithDots,
+  loadOfItems,
+} from '@/lib/distribution';
 
 interface Product {
   _id: string;
@@ -9,9 +21,10 @@ interface Product {
   name: string;
   price: number;
   stock: number;
-  category: { name: string };
+  category?: { name: string };
+  sizeType?: SizeType;
+  warehouse?: { _id: string; code: string; name: string };
   unit: string;
-  image?: string;
 }
 
 interface CartItem {
@@ -24,34 +37,54 @@ interface Customer {
   _id: string;
   name: string;
   phone: string;
+  address?: string;
 }
 
-interface Shift {
+interface Warehouse {
   _id: string;
-  shiftName: string;
-  cashierName: string;
-  startTime: string;
-  status: 'open' | 'closed';
+  code: string;
+  name: string;
+}
+
+type PaymentType = 'paid' | 'partial' | 'unpaid';
+
+const PAYMENT_TYPES: { value: PaymentType; label: string; hint: string }[] = [
+  { value: 'paid', label: 'Lunas', hint: 'Dibayar penuh sekarang' },
+  { value: 'partial', label: 'Bayar Sebagian', hint: 'DP, sisanya ditagih' },
+  { value: 'unpaid', label: 'Hutang', hint: 'Bayar saat kirim / tempo' },
+];
+
+function productIcon(product: Product) {
+  const name = `${product.category?.name || ''} ${product.name}`.toLowerCase();
+  if (name.includes('lpg') || name.includes('gas')) return '🔥';
+  if (name.includes('galon')) return '💧';
+  if (name.includes('cup') || name.includes('botol') || name.includes('kemasan')) return '🥤';
+  return '📦';
 }
 
 export default function POSPage() {
   const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<any[]>([]);
+  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-  const [activeShift, setActiveShift] = useState<Shift | null>(null);
-  
+
   const [cart, setCart] = useState<CartItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
-  
+  const [selectedWarehouse, setSelectedWarehouse] = useState('');
+  const [selectedSize, setSelectedSize] = useState<SizeType | ''>('');
+
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentType, setPaymentType] = useState<PaymentType>('paid');
   const [paymentMethod, setPaymentMethod] = useState('cash');
-  const [cashReceived, setCashReceived] = useState(0);
+  const [amountReceived, setAmountReceived] = useState(0);
+  const [dueDate, setDueDate] = useState('');
+  const [needsDelivery, setNeedsDelivery] = useState(true);
+  const [notes, setNotes] = useState('');
+  const [processing, setProcessing] = useState(false);
   const [showReceipt, setShowReceipt] = useState(false);
   const [lastReceipt, setLastReceipt] = useState<any>(null);
-  
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -62,44 +95,17 @@ export default function POSPage() {
     }
 
     loadProducts();
-    loadCategories();
+    loadWarehouses();
     loadCustomers();
-    loadActiveShift();
   }, []);
 
-  const loadActiveShift = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/shifts?status=open', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const shifts = data.data || [];
-        setActiveShift(shifts.length > 0 ? shifts[0] : null);
-      }
-    } catch (error) {
-      console.error('Error loading active shift:', error);
-    }
-  };
+  const authHeaders = () => ({ Authorization: `Bearer ${localStorage.getItem('token')}` });
 
   const loadProducts = async () => {
     try {
-      const token = localStorage.getItem('token');
-      // Filter produk hanya dari kategori 'product', bukan 'ingredient'
-      let url = '/api/products?categoryType=product';
-      if (selectedCategory) {
-        url += `&category=${selectedCategory}`;
-      }
-      
-      const response = await fetch(url, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
+      const response = await fetch('/api/products', { headers: authHeaders() });
       if (response.ok) {
         const data = await response.json();
-        console.log('Products loaded in POS:', data);
         setProducts(data.products || data.data || []);
       }
     } catch (error) {
@@ -109,32 +115,21 @@ export default function POSPage() {
     }
   };
 
-  const loadCategories = async () => {
+  const loadWarehouses = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/categories', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
+      const response = await fetch('/api/warehouses', { headers: authHeaders() });
       if (response.ok) {
         const data = await response.json();
-        // Filter hanya kategori produk jual (bukan bahan baku)
-        const allCategories = data.categories || data.data || [];
-        const productCategories = allCategories.filter((cat: any) => cat.type !== 'ingredient');
-        setCategories(productCategories);
+        setWarehouses(data.data || []);
       }
     } catch (error) {
-      console.error('Error loading categories:', error);
+      console.error('Error loading warehouses:', error);
     }
   };
 
   const loadCustomers = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/customers', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
+      const response = await fetch('/api/customers', { headers: authHeaders() });
       if (response.ok) {
         const data = await response.json();
         setCustomers(data.customers || data.data || []);
@@ -144,59 +139,43 @@ export default function POSPage() {
     }
   };
 
-  useEffect(() => {
-    loadProducts();
-  }, [selectedCategory]);
+  // Functional updates so rapid consecutive clicks never overwrite each other
+  const setLineQuantity = (product: Product, getQuantity: (current: number) => number) => {
+    setCart((prev) => {
+      const existing = prev.find((item) => item.product._id === product._id);
+      const quantity = Math.min(getQuantity(existing?.quantity || 0), product.stock);
+      if (quantity <= 0) return prev.filter((item) => item.product._id !== product._id);
+      const line = { product, quantity, subtotal: product.price * quantity };
+      return existing
+        ? prev.map((item) => (item.product._id === product._id ? line : item))
+        : [...prev, line];
+    });
+  };
 
   const addToCart = (product: Product) => {
-    if (!activeShift) {
-      alert('Tidak ada shift aktif! Silakan buka shift terlebih dahulu.');
-      return;
-    }
-
     if (product.stock <= 0) {
       alert('Stok produk habis!');
       return;
     }
-
-    const existingItem = cart.find(item => item.product._id === product._id);
-    
-    if (existingItem) {
-      if (existingItem.quantity >= product.stock) {
-        alert('Stok tidak mencukupi!');
-        return;
-      }
-      updateQuantity(product._id, existingItem.quantity + 1);
-    } else {
-      setCart([...cart, {
-        product,
-        quantity: 1,
-        subtotal: product.price,
-      }]);
+    const current = cart.find((item) => item.product._id === product._id)?.quantity || 0;
+    if (current >= product.stock) {
+      alert(`Stok tidak mencukupi! Tersisa ${product.stock} ${product.unit}`);
+      return;
     }
+    setLineQuantity(product, (q) => q + 1);
   };
 
   const updateQuantity = (productId: string, newQuantity: number) => {
-    if (newQuantity <= 0) {
-      removeFromCart(productId);
-      return;
+    const product = cart.find((item) => item.product._id === productId)?.product;
+    if (!product) return;
+    if (newQuantity > product.stock) {
+      alert(`Stok tidak mencukupi! Tersisa ${product.stock} ${product.unit}`);
     }
-
-    const product = cart.find(item => item.product._id === productId)?.product;
-    if (product && newQuantity > product.stock) {
-      alert('Stok tidak mencukupi!');
-      return;
-    }
-
-    setCart(cart.map(item => 
-      item.product._id === productId
-        ? { ...item, quantity: newQuantity, subtotal: item.product.price * newQuantity }
-        : item
-    ));
+    setLineQuantity(product, () => newQuantity);
   };
 
   const removeFromCart = (productId: string) => {
-    setCart(cart.filter(item => item.product._id !== productId));
+    setCart((prev) => prev.filter((item) => item.product._id !== productId));
   };
 
   const clearCart = () => {
@@ -204,32 +183,55 @@ export default function POSPage() {
     setSelectedCustomer(null);
   };
 
-  const calculateTotal = () => {
-    return cart.reduce((total, item) => total + item.subtotal, 0);
-  };
+  const calculateTotal = () => cart.reduce((total, item) => total + item.subtotal, 0);
+
+  const cartLoad = loadOfItems(cart.map((item) => ({ quantity: item.quantity, sizeType: item.product.sizeType })));
 
   const handleCheckout = () => {
     if (cart.length === 0) {
       alert('Keranjang kosong!');
       return;
     }
+    setPaymentType('paid');
+    setPaymentMethod('cash');
+    setAmountReceived(0);
+    setDueDate('');
+    setNeedsDelivery(true);
+    setNotes('');
     setShowPaymentModal(true);
+  };
+
+  // Nominal yang benar-benar masuk sebagai pembayaran (tanpa kembalian)
+  const paidAmount = () => {
+    const total = calculateTotal();
+    if (paymentType === 'paid') return total;
+    if (paymentType === 'unpaid') return 0;
+    return Math.min(amountReceived, total);
   };
 
   const processPayment = async () => {
     const total = calculateTotal();
-    
-    if (paymentMethod === 'cash' && cashReceived < total) {
+
+    if (paymentType !== 'paid' && !selectedCustomer) {
+      alert('Transaksi hutang / bayar sebagian wajib memilih pelanggan.');
+      return;
+    }
+    if (paymentType === 'paid' && paymentMethod === 'cash' && amountReceived < total) {
       alert('Uang yang diterima kurang!');
+      return;
+    }
+    if (paymentType === 'partial' && (amountReceived <= 0 || amountReceived >= total)) {
+      alert('Nominal DP harus lebih dari 0 dan kurang dari total.');
       return;
     }
 
     try {
-      const token = localStorage.getItem('token');
+      setProcessing(true);
       const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const amountPaid = paidAmount();
 
       const transactionData = {
-        items: cart.map(item => ({
+        items: cart.map((item) => ({
           product: item.product._id,
           productName: item.product.name,
           sku: item.product.sku,
@@ -240,10 +242,14 @@ export default function POSPage() {
         subtotal: total,
         tax: 0,
         discount: 0,
-        total: total,
+        total,
         paymentMethod,
-        cashReceived: paymentMethod === 'cash' ? cashReceived : total,
-        change: paymentMethod === 'cash' ? cashReceived - total : 0,
+        amountPaid,
+        cashReceived: paymentType === 'paid' && paymentMethod === 'cash' ? amountReceived : amountPaid,
+        change: paymentType === 'paid' && paymentMethod === 'cash' ? amountReceived - total : 0,
+        dueDate: paymentType !== 'paid' && dueDate ? dueDate : undefined,
+        needsDelivery,
+        notes: notes || undefined,
         cashier: user.id || user._id,
         cashierName: user.name,
         customer: selectedCustomer?._id,
@@ -252,17 +258,15 @@ export default function POSPage() {
 
       const response = await fetch('/api/transactions', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify(transactionData),
       });
 
+      const result = await response.json();
       if (response.ok) {
-        const result = await response.json();
         setLastReceipt({
           ...transactionData,
+          paymentStatus: computePaymentStatus(total, amountPaid),
           invoiceNumber: result.transaction.invoiceNumber,
           createdAt: result.transaction.createdAt,
         });
@@ -271,353 +275,406 @@ export default function POSPage() {
         clearCart();
         loadProducts(); // Reload untuk update stock
       } else {
-        const error = await response.json();
-        alert(error.message || 'Gagal memproses transaksi!');
+        alert(result.error || result.message || 'Gagal memproses transaksi!');
       }
     } catch (error) {
       console.error('Error processing payment:', error);
       alert('Terjadi kesalahan saat memproses pembayaran!');
+    } finally {
+      setProcessing(false);
     }
   };
 
-  const filteredProducts = products.filter(product =>
-    product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    product.sku.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredProducts = products.filter(
+    (product) =>
+      (!selectedWarehouse || product.warehouse?._id === selectedWarehouse) &&
+      (!selectedSize || (product.sizeType || 'kecil') === selectedSize) &&
+      (product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.sku.toLowerCase().includes(searchQuery.toLowerCase()))
   );
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
 
   if (loading) {
     return <div className="flex items-center justify-center h-96">Loading...</div>;
   }
 
-  return (
-    <div className="flex gap-6 h-[calc(100vh-12rem)]">
-      {/* Left Panel - Products */}
-      <div className="flex-1 flex flex-col bg-white rounded-xl shadow-md overflow-hidden">
-        {/* Shift Status Banner */}
-        <div className={`p-4 border-b ${activeShift ? 'bg-green-50' : 'bg-red-50'}`}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">{activeShift ? '✅' : '🔒'}</span>
-              <div>
-                <h3 className={`font-bold ${activeShift ? 'text-green-800' : 'text-red-800'}`}>
-                  Status Shift: {activeShift ? 'Buka' : 'Tutup'}
-                </h3>
-                <p className={`text-sm ${activeShift ? 'text-green-600' : 'text-red-600'}`}>
-                  {activeShift ? (
-                    <>
-                      Kasir: <span className="font-semibold">{activeShift.cashierName}</span> | 
-                      Dibuka: <span className="font-semibold">
-                        {new Date(activeShift.startTime).toLocaleString('id-ID', {
-                          day: '2-digit',
-                          month: 'short',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </span>
-                    </>
-                  ) : (
-                    <>Kasir: - | Dibuka: -</>
-                  )}
-                </p>
-                {!activeShift && (
-                  <p className="text-xs text-red-500 mt-1">
-                    ⚠️ Produk tidak dapat dipilih. Silakan buka shift terlebih dahulu.
-                  </p>
-                )}
-              </div>
-            </div>
-            {!activeShift && (
-              <button
-                onClick={() => router.push('/dashboard/shifts')}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium text-sm"
-              >
-                Buka Shift
-              </button>
-            )}
-          </div>
-        </div>
+  const total = calculateTotal();
+  const totalQty = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const cartQty = new Map(cart.map((item) => [item.product._id, item.quantity]));
 
-        {/* Search & Filter */}
-        <div className="p-4 border-b bg-gray-50">
-          <input
-            type="text"
-            placeholder="🔍 Cari produk (nama atau SKU)..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg mb-3 focus:ring-4 focus:ring-amber-400/50 focus:outline-none"
-          />
-          
-          <div className="flex gap-2 overflow-x-auto">
-            <button
-              onClick={() => setSelectedCategory('')}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap focus:ring-4 focus:ring-amber-400/50 focus:outline-none ${
-                selectedCategory === ''
-                  ? 'bg-amber-600 text-white'
-                  : 'bg-gray-200 text-gray-900 hover:bg-gray-300'
-              }`}
-            >
-              Semua
-            </button>
-            {categories.map(category => (
+  return (
+    <div className="flex gap-4 h-[calc(100vh-6.5rem)] -m-2">
+      {/* Left Panel - Products */}
+      <div className="flex-1 min-w-0 flex flex-col bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        {/* Toolbar */}
+        <div className="px-4 py-3 border-b border-gray-200 space-y-2.5">
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden="true">🔍</span>
+            <input
+              type="text"
+              placeholder="Cari produk (nama atau kode barang)... tekan Enter untuk tambah jika hanya 1 hasil"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && filteredProducts.length === 1) {
+                  addToCart(filteredProducts[0]);
+                  setSearchQuery('');
+                }
+              }}
+              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-amber-400 focus:outline-none"
+            />
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {[{ _id: '', name: 'Semua Gudang' }, ...warehouses].map((w) => (
               <button
-                key={category._id}
-                onClick={() => setSelectedCategory(category._id)}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap focus:ring-4 focus:ring-amber-400/50 focus:outline-none ${
-                  selectedCategory === category._id
-                    ? 'bg-amber-600 text-white'
-                    : 'bg-gray-200 text-gray-900 hover:bg-gray-300'
+                key={w._id || 'all'}
+                onClick={() => setSelectedWarehouse(w._id)}
+                className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap border transition-colors focus:ring-2 focus:ring-amber-400 focus:outline-none ${
+                  selectedWarehouse === w._id
+                    ? 'bg-amber-600 text-white border-amber-600'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                 }`}
               >
-                {category.name}
+                {w._id ? '🏭 ' : ''}
+                {w.name}
               </button>
             ))}
+            <span className="w-px h-5 bg-gray-200 mx-1 shrink-0" aria-hidden="true" />
+            {(['', ...SIZE_TYPES] as const).map((size) => (
+              <button
+                key={size || 'all-size'}
+                onClick={() => setSelectedSize(size)}
+                className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap border transition-colors focus:ring-2 focus:ring-amber-400 focus:outline-none ${
+                  selectedSize === size
+                    ? 'bg-gray-800 text-white border-gray-800'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                {size ? SIZE_LABELS[size] : 'Semua Ukuran'}
+              </button>
+            ))}
+            <span className="ml-auto shrink-0 text-xs text-gray-500 whitespace-nowrap pl-2">{filteredProducts.length} produk</span>
           </div>
         </div>
 
         {/* Product Grid */}
-        <div className="flex-1 overflow-y-auto p-4">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {filteredProducts.map(product => (
-              <button
-                key={product._id}
-                onClick={() => addToCart(product)}
-                disabled={!activeShift || product.stock <= 0}
-                className={`text-left p-4 rounded-lg border-2 transition-all ${
-                  !activeShift || product.stock <= 0
-                    ? 'bg-gray-100 border-gray-200 opacity-50 cursor-not-allowed'
-                    : 'bg-white border-gray-200 hover:border-amber-500 hover:shadow-lg'
-                }`}
-              >
-                <div className="h-32 bg-linear-to-br from-blue-100 to-purple-100 rounded-lg mb-3 flex items-center justify-center">
-                  <span className="text-4xl">📦</span>
-                </div>
-                <h3 className="font-semibold text-gray-800 mb-1 line-clamp-2">{product.name}</h3>
-                <p className="text-sm text-gray-500 mb-2">{product.sku}</p>
-                <div className="flex justify-between items-center">
-                  <span className="text-lg font-bold text-amber-600">
-                    {formatCurrency(product.price)}
-                  </span>
-                  <span
-                    className={`text-xs px-2 py-1 rounded-full ${
-                      product.stock > 10
-                        ? 'bg-green-100 text-green-700'
-                        : product.stock > 0
-                        ? 'bg-yellow-100 text-yellow-700'
-                        : 'bg-red-100 text-red-700'
-                    }`}
-                  >
-                    {product.stock} {product.unit}
-                  </span>
-                </div>
-              </button>
-            ))}
+        <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3">
+            {filteredProducts.map((product) => {
+              const size = product.sizeType || 'kecil';
+              const inCart = cartQty.get(product._id) || 0;
+              const outOfStock = product.stock <= 0;
+              return (
+                <button
+                  key={product._id}
+                  onClick={() => addToCart(product)}
+                  disabled={outOfStock}
+                  className={`relative text-left p-3 rounded-xl border bg-white transition-all flex flex-col focus:ring-2 focus:ring-amber-400 focus:outline-none ${
+                    outOfStock
+                      ? 'opacity-50 cursor-not-allowed border-gray-200'
+                      : inCart > 0
+                      ? 'border-amber-500 ring-1 ring-amber-500 shadow-sm'
+                      : 'border-gray-200 hover:border-amber-400 hover:shadow-md'
+                  }`}
+                >
+                  {inCart > 0 && (
+                    <span className="absolute -top-2 -right-2 min-w-6 h-6 px-1.5 rounded-full bg-amber-600 text-white text-xs font-bold flex items-center justify-center shadow">
+                      {inCart}
+                    </span>
+                  )}
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center text-lg shrink-0" aria-hidden="true">
+                      {productIcon(product)}
+                    </span>
+                    <div className="min-w-0">
+                      <span className={`text-[11px] px-1.5 py-0.5 rounded font-medium ${SIZE_BADGES[size]}`}>
+                        {SIZE_LABELS[size]}
+                      </span>
+                      <div className="text-[11px] text-gray-500 font-mono truncate mt-0.5">{product.sku}</div>
+                    </div>
+                  </div>
+                  <div className="font-semibold text-sm text-gray-900 leading-snug line-clamp-2 min-h-10">{product.name}</div>
+                  <div className="mt-auto pt-2 flex items-end justify-between gap-1">
+                    <span className="font-bold text-amber-700">{formatCurrency(product.price)}</span>
+                    <span
+                      className={`text-[11px] font-medium whitespace-nowrap ${
+                        product.stock <= 0
+                          ? 'text-red-600'
+                          : product.stock <= 10
+                          ? 'text-yellow-700'
+                          : 'text-gray-500'
+                      }`}
+                    >
+                      Stok {product.stock} {product.unit}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
           </div>
 
           {filteredProducts.length === 0 && (
-            <div className="text-center py-12 text-gray-500">
-              <span className="text-6xl mb-4 block">📦</span>
-              <p>Produk tidak ditemukan</p>
+            <div className="text-center py-16 text-gray-500">
+              <span className="text-5xl mb-3 block">📦</span>
+              <div>Produk tidak ditemukan</div>
             </div>
           )}
         </div>
       </div>
 
       {/* Right Panel - Cart */}
-      <div className="w-96 flex flex-col bg-white rounded-xl shadow-md overflow-hidden">
-        {/* Cart Header */}
-        <div className="bg-linear-to-r from-amber-600 to-amber-700 p-4 text-white">
-          <h2 className="text-xl font-bold">Keranjang</h2>
-          <p className="text-sm text-amber-100">{cart.length} item</p>
-        </div>
-
-        {/* Customer Selection */}
-        <div className="p-4 border-b bg-gray-50">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Pelanggan (Opsional)
-          </label>
+      <div className="w-[420px] shrink-0 flex flex-col bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        {/* Cart header + customer */}
+        <div className="px-4 pt-3 pb-3 border-b border-gray-200 space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="text-base font-bold text-gray-900">
+              Keranjang <span className="text-gray-500 font-normal text-sm">({cart.length} produk · {totalQty} qty)</span>
+            </div>
+            {cart.length > 0 && (
+              <button onClick={clearCart} className="text-xs text-red-600 hover:text-red-800 font-medium">
+                Kosongkan
+              </button>
+            )}
+          </div>
           <select
             value={selectedCustomer?._id || ''}
             onChange={(e) => {
-              const customer = customers.find(c => c._id === e.target.value);
+              const customer = customers.find((c) => c._id === e.target.value);
               setSelectedCustomer(customer || null);
             }}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-4 focus:ring-amber-400/50 focus:outline-none"
+            className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-amber-400 focus:outline-none"
+            aria-label="Pelanggan"
           >
-            <option value="">Pelanggan Umum</option>
-            {customers.map(customer => (
+            <option value="">👤 Pelanggan Umum</option>
+            {customers.map((customer) => (
               <option key={customer._id} value={customer._id}>
                 {customer.name} - {customer.phone}
               </option>
             ))}
           </select>
+          {selectedCustomer?.address && (
+            <div className="text-xs text-gray-500 truncate">📍 {selectedCustomer.address}</div>
+          )}
         </div>
 
-        {/* Cart Items */}
-        <div className="flex-1 overflow-y-auto p-4">
+        {/* Cart Items - compact one-line rows */}
+        <div className="flex-1 overflow-y-auto">
           {cart.length === 0 ? (
-            <div className="text-center py-12 text-gray-400">
-              <span className="text-6xl mb-4 block">🛒</span>
-              <p>Keranjang kosong</p>
+            <div className="h-full flex flex-col items-center justify-center text-gray-400 px-6 text-center">
+              <span className="text-5xl mb-3">🛒</span>
+              <div className="text-sm">Keranjang kosong</div>
+              <div className="text-xs mt-1">Klik produk di sebelah kiri untuk menambahkan</div>
             </div>
           ) : (
-            <div className="space-y-3">
-              {cart.map(item => (
-                <div
-                  key={item.product._id}
-                  className="p-3 bg-gray-50 rounded-lg"
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <h4 className="font-semibold text-gray-800 flex-1">
+            <ul className="divide-y divide-gray-100">
+              {cart.map((item, idx) => (
+                <li key={item.product._id} className="px-4 py-1 hover:bg-gray-50">
+                  <div className="flex items-start gap-2">
+                    <span className="text-[11px] text-gray-400 w-4 text-right shrink-0 leading-5">{idx + 1}</span>
+                    <div className="flex-1 min-w-0 text-sm font-medium text-gray-900 leading-5 truncate" title={item.product.name}>
                       {item.product.name}
-                    </h4>
+                    </div>
                     <button
                       onClick={() => removeFromCart(item.product._id)}
-                      className="text-red-500 hover:text-red-700 ml-2"
+                      className="w-5 h-5 rounded text-xs text-gray-400 hover:text-red-600 hover:bg-red-50 shrink-0"
+                      aria-label={`Hapus ${item.product.name}`}
                     >
                       ✕
                     </button>
                   </div>
-                  
-                  <p className="text-sm text-gray-600 mb-2">
-                    {formatCurrency(item.product.price)} × {item.quantity}
-                  </p>
-                  
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 pl-6">
+                    <span className="flex-1 text-[11px] text-gray-500 truncate">
+                      {formatCurrency(item.product.price)} / {item.product.unit}
+                    </span>
+                    <div className="flex items-center border border-gray-300 rounded-md overflow-hidden shrink-0 bg-white">
                       <button
                         onClick={() => updateQuantity(item.product._id, item.quantity - 1)}
-                        className="w-8 h-8 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 font-bold"
+                        className="w-6 h-6 hover:bg-gray-100 font-bold text-gray-700 leading-none"
+                        aria-label="Kurangi"
                       >
                         −
                       </button>
-                      <span className="w-12 text-center font-semibold">
-                        {item.quantity}
-                      </span>
+                      <input
+                        type="number"
+                        min={1}
+                        value={item.quantity}
+                        onChange={(e) => updateQuantity(item.product._id, Number(e.target.value) || 0)}
+                        onFocus={(e) => e.target.select()}
+                        className="w-10 h-6 text-center text-sm font-semibold border-x border-gray-300 focus:outline-none focus:bg-amber-50 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
+                        aria-label={`Jumlah ${item.product.name}`}
+                      />
                       <button
                         onClick={() => updateQuantity(item.product._id, item.quantity + 1)}
-                        className="w-8 h-8 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 font-bold"
+                        className="w-6 h-6 hover:bg-gray-100 font-bold text-gray-700 leading-none"
+                        aria-label="Tambah"
                       >
                         +
                       </button>
                     </div>
-                    <span className="font-bold text-amber-600">
+                    <span className="w-24 text-right text-sm font-semibold text-gray-900 shrink-0">
                       {formatCurrency(item.subtotal)}
                     </span>
                   </div>
-                </div>
+                </li>
               ))}
-            </div>
+            </ul>
           )}
         </div>
 
         {/* Cart Footer */}
-        {cart.length > 0 && (
-          <div className="border-t p-4 bg-gray-50">
-            <div className="mb-4">
-              <div className="flex justify-between mb-2">
-                <span className="text-gray-600">Subtotal:</span>
-                <span className="font-semibold">{formatCurrency(calculateTotal())}</span>
-              </div>
-              <div className="flex justify-between text-lg font-bold">
-                <span>Total:</span>
-                <span className="text-amber-600">{formatCurrency(calculateTotal())}</span>
+        <div className="border-t border-gray-200 px-4 py-3 bg-gray-50 space-y-2.5">
+          <div className="flex items-end justify-between gap-3">
+            <div>
+              <div className="text-[11px] text-gray-500 mb-1">Muatan</div>
+              <div className="flex gap-1 text-[11px]">
+                {SIZE_TYPES.map((size) => (
+                  <span key={size} className={`px-1.5 py-0.5 rounded font-medium ${SIZE_BADGES[size]}`}>
+                    {SIZE_LABELS[size][0]} {cartLoad[size]}
+                  </span>
+                ))}
               </div>
             </div>
-
-            <div className="flex gap-2">
-              <button
-                onClick={clearCart}
-                className="flex-1 py-3 bg-red-100 text-red-800 hover:bg-red-200 rounded-lg font-medium transition-colors focus:ring-4 focus:ring-red-500/50 focus:outline-none"
-                aria-label="Clear cart"
-              >
-                Bersihkan
-              </button>
-              <button
-                onClick={handleCheckout}
-                className="flex-1 py-3 bg-amber-600 text-white hover:bg-amber-700 rounded-lg font-medium transition-colors focus:ring-4 focus:ring-amber-400/50 focus:outline-none"
-              >
-                Bayar
-              </button>
+            <div className="text-right">
+              <div className="text-[11px] text-gray-500">Total</div>
+              <div className="text-2xl font-bold text-gray-900 leading-tight">{formatCurrency(total)}</div>
             </div>
           </div>
-        )}
+          <button
+            onClick={handleCheckout}
+            disabled={cart.length === 0}
+            className="w-full py-3 bg-amber-600 text-white hover:bg-amber-700 rounded-lg font-semibold transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed focus:ring-4 focus:ring-amber-400/50 focus:outline-none"
+          >
+            Bayar
+          </button>
+        </div>
       </div>
 
       {/* Payment Modal */}
       {showPaymentModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md">
+          <div className="bg-white rounded-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <h2 className="text-2xl font-bold mb-4">Pembayaran</h2>
-            
-            <div className="mb-4">
-              <p className="text-sm text-gray-600 mb-1">Total Pembayaran</p>
-              <p className="text-3xl font-bold text-amber-600">
-                {formatCurrency(calculateTotal())}
-              </p>
-            </div>
 
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Metode Pembayaran
-              </label>
-              <div className="grid grid-cols-3 gap-2">
-                {['cash', 'qris', 'debit'].map(method => (
-                  <button
-                    key={method}
-                    onClick={() => {
-                      setPaymentMethod(method);
-                      if (method !== 'cash') {
-                        setCashReceived(calculateTotal());
-                      } else {
-                        setCashReceived(0);
-                      }
-                    }}
-                    className={`py-3 rounded-lg font-medium focus:ring-4 focus:ring-amber-400/50 focus:outline-none ${
-                      paymentMethod === method
-                        ? 'bg-amber-600 text-white'
-                        : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
-                    }`}
-                  >
-                    {method.toUpperCase()}
-                  </button>
-                ))}
+            <div className="mb-4 flex justify-between items-end">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Total Tagihan</p>
+                <p className="text-3xl font-bold text-amber-600">{formatCurrency(total)}</p>
+              </div>
+              <div className="text-right text-sm text-gray-600">
+                <p>{selectedCustomer?.name || 'Pelanggan Umum'}</p>
               </div>
             </div>
 
-            {paymentMethod === 'cash' && (
-              <>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Uang Diterima
-                  </label>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Status Pembayaran</label>
+              <div className="grid grid-cols-3 gap-2">
+                {PAYMENT_TYPES.map((type) => (
+                  <button
+                    key={type.value}
+                    onClick={() => {
+                      setPaymentType(type.value);
+                      setAmountReceived(0);
+                    }}
+                    className={`p-2 rounded-lg text-left border focus:ring-4 focus:ring-amber-400/50 focus:outline-none ${
+                      paymentType === type.value
+                        ? 'bg-amber-600 text-white border-amber-600'
+                        : 'bg-white text-gray-900 border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="font-semibold text-sm">{type.label}</div>
+                    <div className={`text-xs ${paymentType === type.value ? 'text-amber-100' : 'text-gray-500'}`}>
+                      {type.hint}
+                    </div>
+                  </button>
+                ))}
+              </div>
+              {paymentType !== 'paid' && !selectedCustomer && (
+                <p className="text-xs text-red-600 mt-2">⚠️ Pilih pelanggan dulu untuk transaksi yang belum lunas.</p>
+              )}
+            </div>
+
+            {paymentType !== 'unpaid' && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Metode Pembayaran</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {['cash', 'transfer', 'qris'].map((method) => (
+                    <button
+                      key={method}
+                      onClick={() => setPaymentMethod(method)}
+                      className={`py-2.5 rounded-lg font-medium text-sm focus:ring-4 focus:ring-amber-400/50 focus:outline-none ${
+                        paymentMethod === method ? 'bg-amber-600 text-white' : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                      }`}
+                    >
+                      {method.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {((paymentType === 'paid' && paymentMethod === 'cash') || paymentType === 'partial') && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {paymentType === 'partial' ? 'Nominal DP' : 'Uang Diterima'}
+                </label>
+                <div className="relative">
+                  <span className="absolute left-4 top-3 text-gray-500">Rp</span>
                   <input
-                    type="number"
-                    value={cashReceived || ''}
-                    onChange={(e) => setCashReceived(Number(e.target.value))}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg text-lg focus:ring-4 focus:ring-amber-400/50 focus:outline-none"
+                    type="text"
+                    inputMode="numeric"
+                    value={amountReceived ? formatNumberWithDots(amountReceived) : ''}
+                    onChange={(e) => setAmountReceived(Number(e.target.value.replace(/[^0-9]/g, '')) || 0)}
+                    className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg text-lg focus:ring-4 focus:ring-amber-400/50 focus:outline-none"
                     placeholder="0"
+                    autoFocus
                   />
                 </div>
-
-                {cashReceived >= calculateTotal() && (
-                  <div className="mb-4 p-3 bg-green-50 rounded-lg">
-                    <p className="text-sm text-gray-600 mb-1">Kembalian</p>
-                    <p className="text-2xl font-bold text-green-600">
-                      {formatCurrency(cashReceived - calculateTotal())}
-                    </p>
+                {paymentType === 'paid' && amountReceived >= total && (
+                  <div className="mt-2 p-3 bg-green-50 rounded-lg flex justify-between">
+                    <span className="text-sm text-gray-600">Kembalian</span>
+                    <span className="font-bold text-green-600">{formatCurrency(amountReceived - total)}</span>
                   </div>
                 )}
-              </>
+              </div>
             )}
+
+            {paymentType !== 'paid' && (
+              <div className="mb-4 grid grid-cols-2 gap-3">
+                <div className="p-3 bg-red-50 rounded-lg">
+                  <p className="text-xs text-gray-600">Sisa Tagihan</p>
+                  <p className="font-bold text-red-600">{formatCurrency(total - paidAmount())}</p>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Jatuh Tempo (opsional)</label>
+                  <input
+                    type="date"
+                    value={dueDate}
+                    onChange={(e) => setDueDate(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+            )}
+
+            <label className="flex items-center gap-2 mb-3 text-sm text-gray-800 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={needsDelivery}
+                onChange={(e) => setNeedsDelivery(e.target.checked)}
+                className="w-4 h-4 accent-amber-600"
+              />
+              Barang perlu dikirim (masuk antrian Plan Pengiriman)
+            </label>
+
+            <div className="mb-4">
+              <input
+                type="text"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Catatan (opsional)"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none"
+              />
+            </div>
 
             <div className="flex gap-3">
               <button
@@ -628,9 +685,10 @@ export default function POSPage() {
               </button>
               <button
                 onClick={processPayment}
-                className="flex-1 py-3 bg-amber-600 text-white hover:bg-amber-700 rounded-lg font-medium focus:ring-4 focus:ring-amber-400/50 focus:outline-none"
+                disabled={processing}
+                className="flex-1 py-3 bg-amber-600 text-white hover:bg-amber-700 rounded-lg font-medium disabled:opacity-60 focus:ring-4 focus:ring-amber-400/50 focus:outline-none"
               >
-                Proses
+                {processing ? 'Memproses...' : 'Simpan Transaksi'}
               </button>
             </div>
           </div>
@@ -640,17 +698,20 @@ export default function POSPage() {
       {/* Receipt Modal */}
       {showReceipt && lastReceipt && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
             <div className="text-center mb-6">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
                 <span className="text-4xl">✅</span>
               </div>
-              <h2 className="text-2xl font-bold text-green-600 mb-2">
-                Pembayaran Berhasil!
-              </h2>
+              <h2 className="text-2xl font-bold text-green-600 mb-2">Transaksi Tersimpan!</h2>
               <p className="text-gray-600">
                 Invoice: <span className="font-mono font-semibold">{lastReceipt.invoiceNumber}</span>
               </p>
+              <span
+                className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-medium ${PAYMENT_STATUS_BADGES[lastReceipt.paymentStatus]}`}
+              >
+                {PAYMENT_STATUS_LABELS[lastReceipt.paymentStatus]}
+              </span>
             </div>
 
             <div className="border-t border-b py-4 mb-4 space-y-2">
@@ -664,28 +725,32 @@ export default function POSPage() {
               ))}
             </div>
 
-            <div className="space-y-2 mb-6">
-              <div className="flex justify-between">
+            <div className="space-y-2 mb-6 text-sm">
+              <div className="flex justify-between text-base">
                 <span className="text-gray-600">Total:</span>
                 <span className="font-bold">{formatCurrency(lastReceipt.total)}</span>
               </div>
-              {paymentMethod === 'cash' && (
-                <>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Bayar:</span>
-                    <span>{formatCurrency(lastReceipt.cashReceived)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Kembalian:</span>
-                    <span className="font-bold text-green-600">
-                      {formatCurrency(lastReceipt.change)}
-                    </span>
-                  </div>
-                </>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Dibayar:</span>
+                <span>{formatCurrency(lastReceipt.amountPaid)}</span>
+              </div>
+              {lastReceipt.change > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Kembalian:</span>
+                  <span className="font-bold text-green-600">{formatCurrency(lastReceipt.change)}</span>
+                </div>
+              )}
+              {lastReceipt.total - lastReceipt.amountPaid > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Sisa Tagihan:</span>
+                  <span className="font-bold text-red-600">
+                    {formatCurrency(lastReceipt.total - lastReceipt.amountPaid)}
+                  </span>
+                </div>
               )}
               <div className="flex justify-between">
-                <span className="text-gray-600">Metode:</span>
-                <span className="uppercase font-medium">{lastReceipt.paymentMethod}</span>
+                <span className="text-gray-600">Pengiriman:</span>
+                <span>{lastReceipt.needsDelivery ? 'Masuk antrian kirim' : 'Ambil sendiri'}</span>
               </div>
             </div>
 

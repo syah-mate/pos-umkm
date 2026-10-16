@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Product from '@/models/Product';
 import Category from '@/models/Category';
+import '@/models/Warehouse';
 
 // Helper function to round stock to 2 decimal places
 function roundStock(value: number): number {
@@ -16,7 +17,9 @@ export async function GET(
   try {
     const { id } = await params;
     await dbConnect();
-    const product = await Product.findById(id).populate('category', 'name color');
+    const product = await Product.findById(id)
+      .populate('category', 'name color')
+      .populate('warehouse', 'code name');
 
     if (!product) {
       return NextResponse.json(
@@ -49,12 +52,23 @@ export async function PUT(
     if (body.stock !== undefined) {
       body.stock = roundStock(body.stock);
     }
+
+    // Empty select values clear the reference instead of failing ObjectId casting
+    const update: any = { ...body };
+    const unset: any = {};
+    for (const ref of ['category', 'warehouse']) {
+      if (ref in update && !update[ref]) {
+        delete update[ref];
+        unset[ref] = 1;
+      }
+    }
+    if (Object.keys(unset).length > 0) update.$unset = unset;
     
     const product = await Product.findByIdAndUpdate(
       id,
-      body,
+      update,
       { new: true, runValidators: true }
-    ).populate('category', 'name color');
+    ).populate('category', 'name color').populate('warehouse', 'code name');
 
     if (!product) {
       return NextResponse.json(

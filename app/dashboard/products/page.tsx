@@ -1,13 +1,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { SIZE_BADGES, SIZE_LABELS, SIZE_TYPES, SizeType } from '@/lib/distribution';
 
 interface Product {
   _id: string;
   sku: string;
   name: string;
   description?: string;
-  category: { _id: string; name: string };
+  category?: { _id: string; name: string };
+  sizeType?: SizeType;
+  warehouse?: { _id: string; code: string; name: string };
   price: number;
   cost: number;
   stock: number;
@@ -15,7 +18,12 @@ interface Product {
   unit: string;
   barcode?: string;
   isActive: boolean;
-  hasRecipe: boolean;
+}
+
+interface Warehouse {
+  _id: string;
+  code: string;
+  name: string;
 }
 
 interface Category {
@@ -28,6 +36,9 @@ interface Category {
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+  const [filterWarehouse, setFilterWarehouse] = useState('');
+  const [filterSize, setFilterSize] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showManageCategoryModal, setShowManageCategoryModal] = useState(false);
@@ -42,6 +53,8 @@ export default function ProductsPage() {
     name: '',
     description: '',
     category: '',
+    sizeType: 'kecil' as SizeType,
+    warehouse: '',
     price: 0,
     cost: 0,
     stock: 0,
@@ -62,7 +75,23 @@ export default function ProductsPage() {
 
   useEffect(() => {
     loadCategories();
+    loadWarehouses();
   }, []);
+
+  const loadWarehouses = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/warehouses', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setWarehouses(data.data || []);
+      }
+    } catch (error) {
+      console.error('Error loading warehouses:', error);
+    }
+  };
 
   const generateSKU = () => {
     const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -151,7 +180,7 @@ export default function ProductsPage() {
         loadProducts();
       } else {
         const error = await response.json();
-        alert(error.message || 'Gagal menyimpan produk!');
+        alert(error.error || error.message || 'Gagal menyimpan produk!');
       }
     } catch (error) {
       console.error('Error saving product:', error);
@@ -165,7 +194,9 @@ export default function ProductsPage() {
       sku: product.sku,
       name: product.name,
       description: product.description || '',
-      category: product.category._id,
+      category: product.category?._id || '',
+      sizeType: product.sizeType || 'kecil',
+      warehouse: product.warehouse?._id || '',
       price: product.price,
       cost: product.cost,
       stock: product.stock,
@@ -280,6 +311,8 @@ export default function ProductsPage() {
       name: '',
       description: '',
       category: '',
+      sizeType: 'kecil',
+      warehouse: '',
       price: 0,
       cost: 0,
       stock: 0,
@@ -290,8 +323,10 @@ export default function ProductsPage() {
   };
 
   const filteredProducts = products.filter(product =>
-    product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    product.sku.toLowerCase().includes(searchQuery.toLowerCase())
+    (product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.sku.toLowerCase().includes(searchQuery.toLowerCase())) &&
+    (!filterWarehouse || product.warehouse?._id === filterWarehouse) &&
+    (!filterSize || (product.sizeType || 'kecil') === filterSize)
   );
 
   const formatCurrency = (amount: number) => {
@@ -309,20 +344,18 @@ export default function ProductsPage() {
   return (
     <div>
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex-1">
-          <input
-            type="text"
-            placeholder="🔍 Cari produk..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:ring-4 focus:ring-amber-400/50 focus:outline-none"
-          />
-        </div>
-        <div className="flex gap-2">
+      <div className="flex flex-wrap items-center gap-3 mb-4">
+        <input
+          type="text"
+          placeholder="🔍 Cari produk (nama atau kode barang)..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="flex-1 min-w-64 max-w-md px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-4 focus:ring-amber-400/50 focus:outline-none"
+        />
+        <div className="flex gap-2 ml-auto">
           <button
             onClick={() => setShowManageCategoryModal(true)}
-            className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition-colors font-medium focus:ring-4 focus:ring-gray-500/50 focus:outline-none"
+            className="px-3 py-2 bg-white border border-gray-300 text-gray-800 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium focus:ring-4 focus:ring-gray-400/40 focus:outline-none"
           >
             📂 Kelola Kategori
           </button>
@@ -332,7 +365,7 @@ export default function ProductsPage() {
               setCategoryForm({ name: '', description: '', type: 'product' });
               setShowCategoryModal(true);
             }}
-            className="px-4 py-2 bg-purple-700 text-white rounded-lg hover:bg-purple-800 transition-colors font-medium focus:ring-4 focus:ring-purple-500/50 focus:outline-none"
+            className="px-3 py-2 bg-white border border-gray-300 text-gray-800 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium focus:ring-4 focus:ring-gray-400/40 focus:outline-none"
           >
             + Kategori
           </button>
@@ -351,7 +384,7 @@ export default function ProductsPage() {
       </div>
 
       {/* Category Filter */}
-      <div className="flex gap-2 mb-6 overflow-x-auto">
+      <div className="flex flex-wrap items-center gap-2 mb-4">
         <button
           onClick={() => setFilterCategory('')}
             className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap focus:ring-4 focus:ring-amber-400/50 focus:outline-none ${
@@ -375,6 +408,30 @@ export default function ProductsPage() {
             {category.name}
           </button>
         ))}
+        <div className="flex gap-2 ml-auto">
+            <select
+              value={filterWarehouse}
+              onChange={(e) => setFilterWarehouse(e.target.value)}
+              className="px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:ring-4 focus:ring-amber-400/50 focus:outline-none"
+              aria-label="Filter gudang"
+            >
+              <option value="">Semua Gudang</option>
+              {warehouses.map(w => (
+                <option key={w._id} value={w._id}>{w.name}</option>
+              ))}
+            </select>
+            <select
+              value={filterSize}
+              onChange={(e) => setFilterSize(e.target.value)}
+              className="px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:ring-4 focus:ring-amber-400/50 focus:outline-none"
+              aria-label="Filter ukuran"
+            >
+              <option value="">Semua Ukuran</option>
+              {SIZE_TYPES.map(size => (
+                <option key={size} value={size}>{SIZE_LABELS[size]}</option>
+              ))}
+            </select>
+        </div>
       </div>
 
       {/* Products Table */}
@@ -383,28 +440,31 @@ export default function ProductsPage() {
           <table className="w-full">
             <thead className="bg-gray-50 border-b">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  SKU
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Kode Barang
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Produk
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Kategori
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Ukuran
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Harga
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Gudang
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  HPP
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Harga Jual
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Harga Beli
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Stok
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Aksi
                 </th>
               </tr>
@@ -412,38 +472,39 @@ export default function ProductsPage() {
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredProducts.map(product => (
                 <tr key={product._id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-4 py-3 whitespace-nowrap">
                     <span className="font-mono text-sm text-gray-900">{product.sku}</span>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 py-3">
                     <div>
-                      <div className="font-semibold text-gray-900">{product.name}</div>
+                      <div className="font-semibold text-gray-900 min-w-56">{product.name}</div>
+                      {product.category && (
+                        <div className="text-xs text-purple-700">{product.category.name}</div>
+                      )}
                       {product.description && (
                         <div className="text-sm text-gray-700">{product.description}</div>
                       )}
-                      {product.hasRecipe && (
-                        <span className="inline-block mt-1 text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">
-                          🍳 Has Recipe
-                        </span>
-                      )}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm">
-                      {product.category.name}
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <span className={`px-3 py-1 rounded-full text-sm ${SIZE_BADGES[product.sizeType || 'kecil']}`}>
+                      {SIZE_LABELS[product.sizeType || 'kecil']}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                    {product.warehouse?.name || <span className="text-gray-400">-</span>}
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap">
                     <div className="font-semibold text-gray-900">
                       {formatCurrency(product.price)}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-4 py-3 whitespace-nowrap">
                     <div className="text-gray-700">
                       {formatCurrency(product.cost)}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-4 py-3 whitespace-nowrap">
                     <div className="flex items-center gap-2">
                       <span className={`font-semibold ${
                         product.stock <= product.minStock 
@@ -462,7 +523,7 @@ export default function ProductsPage() {
                       )}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-4 py-3 whitespace-nowrap">
                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                       product.isActive
                         ? 'bg-green-100 text-green-700'
@@ -471,10 +532,10 @@ export default function ProductsPage() {
                       {product.isActive ? 'Aktif' : 'Nonaktif'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">
                     <button
                       onClick={() => handleEdit(product)}
-                      className="text-blue-700 hover:text-blue-900 mr-3 focus:ring-2 focus:ring-blue-500/50 focus:outline-none rounded px-2 py-1"
+                      className="text-blue-700 hover:text-blue-900 mr-3 focus:ring-2 focus:ring-amber-500/50 focus:outline-none rounded px-2 py-1"
                       aria-label="Edit product"
                     >
                       Edit
@@ -513,15 +574,14 @@ export default function ProductsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    SKU * {!editingProduct && <span className="text-xs text-gray-500">(Auto-generated)</span>}
+                    Kode Barang * {!editingProduct && <span className="text-xs text-gray-500">(otomatis, bisa diubah)</span>}
                   </label>
                   <input
                     type="text"
                     required
                     value={formData.sku}
-                    onChange={(e) => editingProduct && setFormData({...formData, sku: e.target.value})}
-                    disabled={!editingProduct}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed font-mono"
+                    onChange={(e) => setFormData({...formData, sku: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:bg-gray-100 disabled:cursor-not-allowed font-mono"
                   />
                 </div>
 
@@ -533,7 +593,7 @@ export default function ProductsPage() {
                     type="text"
                     value={formData.barcode}
                     onChange={(e) => setFormData({...formData, barcode: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                   />
                 </div>
               </div>
@@ -547,7 +607,7 @@ export default function ProductsPage() {
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                 />
               </div>
 
@@ -559,22 +619,21 @@ export default function ProductsPage() {
                   value={formData.description}
                   onChange={(e) => setFormData({...formData, description: e.target.value})}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Kategori *
+                    Kategori
                   </label>
                   <select
-                    required
                     value={formData.category}
                     onChange={(e) => setFormData({...formData, category: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                   >
-                    <option value="">Pilih Kategori</option>
+                    <option value="">Tanpa Kategori</option>
                     {categories.map(cat => (
                       <option key={cat._id} value={cat._id}>{cat.name}</option>
                     ))}
@@ -589,7 +648,7 @@ export default function ProductsPage() {
                     required
                     value={formData.unit}
                     onChange={(e) => setFormData({...formData, unit: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                   >
                     <option value="pcs">Pcs</option>
                     <option value="kg">Kg</option>
@@ -598,7 +657,56 @@ export default function ProductsPage() {
                     <option value="ml">ML</option>
                     <option value="box">Box</option>
                     <option value="pack">Pack</option>
+                    <option value="dus">Dus</option>
+                    <option value="karton">Karton</option>
+                    <option value="sak">Sak</option>
+                    <option value="bal">Bal</option>
+                    <option value="lusin">Lusin</option>
                   </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Tipe Ukuran *
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {SIZE_TYPES.map(size => (
+                      <button
+                        key={size}
+                        type="button"
+                        onClick={() => setFormData({...formData, sizeType: size})}
+                        className={`py-2 rounded-lg text-sm font-medium border ${
+                          formData.sizeType === size
+                            ? 'bg-amber-600 text-white border-amber-600'
+                            : 'bg-white text-gray-800 border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        {SIZE_LABELS[size]}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Gudang *
+                  </label>
+                  <select
+                    required
+                    value={formData.warehouse}
+                    onChange={(e) => setFormData({...formData, warehouse: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  >
+                    <option value="">Pilih Gudang</option>
+                    {warehouses.map(w => (
+                      <option key={w._id} value={w._id}>{w.code} - {w.name}</option>
+                    ))}
+                  </select>
+                  {warehouses.length === 0 && (
+                    <p className="text-xs text-red-600 mt-1">Belum ada gudang. Tambahkan di menu Gudang dulu.</p>
+                  )}
                 </div>
               </div>
 
@@ -618,14 +726,14 @@ export default function ProductsPage() {
                         setFormData({...formData, price: value ? Number(value) : 0});
                       }}
                       placeholder="0"
-                      className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                     />
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    HPP / Cost *
+                    Harga Beli *
                   </label>
                   <div className="relative">
                     <span className="absolute left-3 top-2 text-gray-500">Rp</span>
@@ -638,7 +746,7 @@ export default function ProductsPage() {
                         setFormData({...formData, cost: value ? Number(value) : 0});
                       }}
                       placeholder="0"
-                      className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                     />
                   </div>
                 </div>
@@ -654,7 +762,7 @@ export default function ProductsPage() {
                     required
                     value={formData.stock}
                     onChange={(e) => setFormData({...formData, stock: Number(e.target.value)})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                   />
                 </div>
 
@@ -667,7 +775,7 @@ export default function ProductsPage() {
                     required
                     value={formData.minStock}
                     onChange={(e) => setFormData({...formData, minStock: Number(e.target.value)})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                   />
                 </div>
               </div>
@@ -713,7 +821,7 @@ export default function ProductsPage() {
                   required
                   value={categoryForm.name}
                   onChange={(e) => setCategoryForm({...categoryForm, name: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                 />
               </div>
 
@@ -725,26 +833,8 @@ export default function ProductsPage() {
                   value={categoryForm.description}
                   onChange={(e) => setCategoryForm({...categoryForm, description: e.target.value})}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                 />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Jenis Kategori *
-                </label>
-                <select
-                  required
-                  value={categoryForm.type}
-                  onChange={(e) => setCategoryForm({...categoryForm, type: e.target.value as 'ingredient' | 'product'})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="product">Produk Jual</option>
-                  <option value="ingredient">Bahan Baku</option>
-                </select>
-                <p className="text-xs text-gray-500 mt-1">
-                  Kategori bahan baku tidak akan muncul di kasir
-                </p>
               </div>
 
               <div className="flex gap-3">
@@ -800,13 +890,6 @@ export default function ProductsPage() {
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <h3 className="font-semibold text-gray-900">{category.name}</h3>
-                        <span className={`px-2 py-0.5 text-xs rounded-full ${
-                          category.type === 'ingredient'
-                            ? 'bg-orange-100 text-orange-700'
-                            : 'bg-green-100 text-green-700'
-                        }`}>
-                          {category.type === 'ingredient' ? 'Bahan Baku' : 'Produk Jual'}
-                        </span>
                       </div>
                       {category.description && (
                         <p className="text-sm text-gray-600 mt-1">{category.description}</p>

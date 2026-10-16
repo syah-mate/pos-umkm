@@ -151,10 +151,7 @@ export default function SuppliersPage() {
     <div>
       <div className="bg-white rounded-xl shadow-md p-6 mb-6">
         <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-800">Master Supplier</h1>
-            <p className="text-gray-600 mt-1">Kelola data supplier Anda</p>
-          </div>
+          <p className="text-gray-600 text-sm">Kelola data supplier Anda</p>
           <button
             onClick={() => {
               resetForm();
@@ -328,7 +325,7 @@ export default function SuppliersPage() {
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                     placeholder="PT. Supplier Makmur"
                   />
                 </div>
@@ -341,7 +338,7 @@ export default function SuppliersPage() {
                     type="text"
                     value={formData.contactPerson}
                     onChange={(e) => setFormData({...formData, contactPerson: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                     placeholder="Nama PIC"
                   />
                 </div>
@@ -358,7 +355,7 @@ export default function SuppliersPage() {
                     required
                     value={formData.phone}
                     onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                     placeholder="081234567890"
                   />
                 </div>
@@ -371,7 +368,7 @@ export default function SuppliersPage() {
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                     placeholder="supplier@email.com"
                   />
                 </div>
@@ -386,7 +383,7 @@ export default function SuppliersPage() {
                   value={formData.address}
                   onChange={(e) => setFormData({...formData, address: e.target.value})}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                   placeholder="Jl. Contoh No. 123, Jakarta"
                 />
               </div>
@@ -400,7 +397,7 @@ export default function SuppliersPage() {
                   value={formData.notes}
                   onChange={(e) => setFormData({...formData, notes: e.target.value})}
                   rows={2}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                   placeholder="Catatan tambahan (opsional)"
                 />
               </div>
@@ -412,7 +409,7 @@ export default function SuppliersPage() {
                     type="checkbox"
                     checked={formData.isActive}
                     onChange={(e) => setFormData({...formData, isActive: e.target.checked})}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-amber-500"
                   />
                   <span className="text-sm font-medium text-gray-700">Supplier Aktif</span>
                 </label>

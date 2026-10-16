@@ -481,9 +481,9 @@ export default function InventoryPage() {
                 resetPOForm();
                 setShowPOModal(true);
               }}
-              className="px-4 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-800 transition-colors font-medium focus:ring-4 focus:ring-blue-500/50 focus:outline-none"
+              className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium focus:ring-4 focus:ring-amber-400/50 focus:outline-none"
             >
-              + Create PO
+              + Buat PO
             </button>
           </div>
         </div>
@@ -554,7 +554,7 @@ export default function InventoryPage() {
                         <>
                           <button
                             onClick={() => handleEditPO(po)}
-                            className="text-blue-600 hover:text-blue-900 font-medium text-sm"
+                            className="text-amber-700 hover:text-amber-900 font-medium text-sm"
                           >
                             Edit
                           </button>
@@ -660,7 +660,7 @@ export default function InventoryPage() {
                     required
                     value={poFormData.supplier}
                     onChange={(e) => setPOFormData({...poFormData, supplier: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                   >
                     <option value="">Pilih Supplier</option>
                     {suppliers.map(s => (
@@ -677,7 +677,7 @@ export default function InventoryPage() {
                     required
                     value={poFormData.status}
                     onChange={(e) => setPOFormData({...poFormData, status: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                   >
                     <option value="draft">Draft</option>
                     <option value="sent">Sent</option>
@@ -696,7 +696,7 @@ export default function InventoryPage() {
                     required
                     value={poFormData.orderDate}
                     onChange={(e) => setPOFormData({...poFormData, orderDate: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                   />
                 </div>
 
@@ -708,7 +708,7 @@ export default function InventoryPage() {
                     type="date"
                     value={poFormData.expectedDate}
                     onChange={(e) => setPOFormData({...poFormData, expectedDate: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                   />
                 </div>
               </div>
@@ -749,7 +749,7 @@ export default function InventoryPage() {
                             };
                             setPOFormData({ ...poFormData, items: newItems });
                           }}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                           disabled={allProducts.length === 0}
                         >
                           <option value="">
@@ -780,7 +780,7 @@ export default function InventoryPage() {
                           placeholder="Qty"
                           value={item.quantity}
                           onChange={(e) => handleItemChange(index, 'quantity', Number(e.target.value))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                         />
                       </div>
 
@@ -792,7 +792,7 @@ export default function InventoryPage() {
                           placeholder="Harga"
                           value={item.unitPrice}
                           onChange={(e) => handleItemChange(index, 'unitPrice', Number(e.target.value))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                         />
                       </div>
 
@@ -828,13 +828,13 @@ export default function InventoryPage() {
                     min="0"
                     value={poFormData.tax}
                     onChange={(e) => setPOFormData({...poFormData, tax: Number(e.target.value)})}
-                    className="w-40 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-40 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                   />
                 </div>
 
                 <div className="flex justify-between items-center text-xl border-t pt-3">
                   <span className="font-bold text-gray-800">TOTAL:</span>
-                  <span className="font-bold text-blue-600">{formatCurrency(calculateTotal())}</span>
+                  <span className="font-bold text-amber-700">{formatCurrency(calculateTotal())}</span>
                 </div>
               </div>
 
@@ -847,7 +847,7 @@ export default function InventoryPage() {
                   value={poFormData.notes}
                   onChange={(e) => setPOFormData({...poFormData, notes: e.target.value})}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                   placeholder="Catatan tambahan (opsional)"
                 />
               </div>
@@ -866,7 +866,7 @@ export default function InventoryPage() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg font-medium"
+                  className="flex-1 py-2 bg-amber-600 text-white hover:bg-amber-600 rounded-lg font-medium"
                 >
                   {editingPO ? 'Update PO' : 'Buat PO'}
                 </button>

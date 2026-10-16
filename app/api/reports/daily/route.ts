@@ -19,7 +19,8 @@ export async function GET(request: NextRequest) {
     // Get transactions for the day
     const transactions = await Transaction.find({
       createdAt: { $gte: startDate, $lte: endDate },
-      paymentStatus: 'paid',
+      // Penjualan hutang / bayar sebagian tetap dihitung sebagai penjualan
+      paymentStatus: { $nin: ['refunded', 'failed'] },
     }).sort({ createdAt: -1 });
     
     // Calculate totals
@@ -31,10 +32,16 @@ export async function GET(request: NextRequest) {
     
     // Payment method breakdown
     const paymentBreakdown = transactions.reduce((acc: any, t) => {
-      acc[t.paymentMethod] = (acc[t.paymentMethod] || 0) + t.total;
+      if (!acc[t.paymentMethod]) {
+        acc[t.paymentMethod] = { method: t.paymentMethod, count: 0, total: 0 };
+      }
+      acc[t.paymentMethod].count += 1;
+      acc[t.paymentMethod].total += t.total;
       return acc;
     }, {});
-    
+    const paymentMethods = Object.values(paymentBreakdown)
+      .sort((a: any, b: any) => b.total - a.total);
+
     // Top selling products
     const productSales: any = {};
     transactions.forEach(t => {
@@ -42,20 +49,18 @@ export async function GET(request: NextRequest) {
         const key = item.product.toString();
         if (!productSales[key]) {
           productSales[key] = {
-            product: item.product,
-            name: item.productName,
-            sku: item.sku,
-            quantity: 0,
-            revenue: 0,
+            product: { _id: item.product, name: item.productName, sku: item.sku },
+            totalQuantity: 0,
+            totalRevenue: 0,
           };
         }
-        productSales[key].quantity += item.quantity;
-        productSales[key].revenue += item.subtotal;
+        productSales[key].totalQuantity += item.quantity;
+        productSales[key].totalRevenue += item.subtotal;
       });
     });
-    
+
     const topProducts = Object.values(productSales)
-      .sort((a: any, b: any) => b.quantity - a.quantity)
+      .sort((a: any, b: any) => b.totalQuantity - a.totalQuantity)
       .slice(0, 10);
     
     // Hourly sales
@@ -72,7 +77,7 @@ export async function GET(request: NextRequest) {
         totalTransactions,
         totalItems,
         averageTransaction: totalTransactions > 0 ? totalSales / totalTransactions : 0,
-        paymentBreakdown,
+        paymentMethods,
         topProducts,
         hourlySales,
         transactions: transactions.slice(0, 20), // Last 20 transactions

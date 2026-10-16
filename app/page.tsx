@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 export default function Home() {
   const [email, setEmail] = useState('');
@@ -44,30 +45,30 @@ export default function Home() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-      <div className="w-full max-w-md px-6">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
+    <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-amber-50 via-stone-50 to-stone-200 px-4">
+      <div className="w-full max-w-md">
+        <div className="bg-white rounded-2xl shadow-xl border border-stone-200 p-8">
           <div className="mb-8 text-center">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              POS UMKM
-            </h1>
-            <p className="text-gray-700 dark:text-gray-200">
-              Masuk ke akun Anda
-            </p>
+            <Image
+              src="/rsz_logo.png"
+              alt="Lentera POS"
+              width={800}
+              height={200}
+              priority
+              className="w-auto h-16 mx-auto mb-4"
+            />
+            <div className="text-stone-600 text-sm">Masuk ke akun Anda</div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
-              <div className="bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-200 px-4 py-3 rounded-lg text-base font-medium" role="alert" aria-live="polite">
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm font-medium" role="alert" aria-live="polite">
                 {error}
               </div>
             )}
 
             <div>
-              <label
-                htmlFor="email"
-                className="block text-base font-medium text-gray-900 dark:text-gray-100 mb-2"
-              >
+              <label htmlFor="email" className="block text-sm font-medium text-gray-800 mb-1.5">
                 Email
               </label>
               <input
@@ -76,16 +77,14 @@ export default function Home() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition"
-                placeholder="email / username"
+                autoComplete="username"
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-4 focus:ring-amber-400/40 focus:border-amber-500 outline-none transition"
+                placeholder="nama@email.com"
               />
             </div>
 
             <div>
-              <label
-                htmlFor="password"
-                className="block text-base font-medium text-gray-900 dark:text-gray-100 mb-2"
-              >
+              <label htmlFor="password" className="block text-sm font-medium text-gray-800 mb-1.5">
                 Password
               </label>
               <input
@@ -94,7 +93,8 @@ export default function Home() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition"
+                autoComplete="current-password"
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-4 focus:ring-amber-400/40 focus:border-amber-500 outline-none transition"
                 placeholder="••••••••"
               />
             </div>
@@ -102,13 +102,13 @@ export default function Home() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-700 hover:bg-blue-800 disabled:bg-gray-400 disabled:text-gray-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 shadow-lg hover:shadow-xl disabled:cursor-not-allowed focus:ring-4 focus:ring-blue-500/50 text-base"
-              aria-label="Masuk ke akun"
+              className="w-full bg-amber-600 hover:bg-amber-700 disabled:bg-gray-300 disabled:text-gray-600 text-white font-semibold py-3 px-4 rounded-lg transition shadow-md disabled:cursor-not-allowed focus:ring-4 focus:ring-amber-400/50 outline-none"
             >
               {loading ? 'Memproses...' : 'Masuk'}
             </button>
           </form>
         </div>
+        <div className="text-center text-xs text-stone-500 mt-6">Sistem POS &amp; Distribusi</div>
       </div>
     </div>
   );

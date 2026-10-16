@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Product from '@/models/Product';
 import Category from '@/models/Category';
+import '@/models/Warehouse';
 
 // Helper function to round stock to 2 decimal places
 function roundStock(value: number): number {
@@ -18,11 +19,21 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search');
     const active = searchParams.get('active');
     const categoryType = searchParams.get('categoryType'); // 'ingredient' or 'product'
+    const warehouse = searchParams.get('warehouse');
+    const sizeType = searchParams.get('sizeType');
     
     const query: any = {};
     
     if (category) {
       query.category = category;
+    }
+
+    if (warehouse) {
+      query.warehouse = warehouse;
+    }
+
+    if (sizeType) {
+      query.sizeType = sizeType;
     }
     
     if (search) {
@@ -42,6 +53,7 @@ export async function GET(request: NextRequest) {
     
     let products = await Product.find(query)
       .populate('category', 'name color type')
+      .populate('warehouse', 'code name')
       .sort({ name: 1 });
     
     // Filter by category type if specified
@@ -67,9 +79,9 @@ export async function POST(request: NextRequest) {
     await dbConnect();
     const body = await request.json();
 
-    if (!body.sku || !body.name || !body.category || body.price === undefined) {
+    if (!body.sku || !body.name || body.price === undefined) {
       return NextResponse.json(
-        { error: 'SKU, name, category, and price are required' },
+        { error: 'Kode barang, nama, dan harga jual wajib diisi' },
         { status: 400 }
       );
     }
@@ -78,11 +90,14 @@ export async function POST(request: NextRequest) {
     if (body.stock !== undefined) {
       body.stock = roundStock(body.stock);
     }
+    if (!body.category) delete body.category;
+    if (!body.warehouse) delete body.warehouse;
 
     const product = await Product.create(body);
     
     const populatedProduct = await Product.findById(product._id)
-      .populate('category', 'name color');
+      .populate('category', 'name color')
+      .populate('warehouse', 'code name');
 
     return NextResponse.json(
       { message: 'Product created successfully', product: populatedProduct },
@@ -93,7 +108,7 @@ export async function POST(request: NextRequest) {
     
     if (error.code === 11000) {
       return NextResponse.json(
-        { error: 'Product with this SKU already exists' },
+        { error: 'Kode barang sudah dipakai produk lain' },
         { status: 409 }
       );
     }

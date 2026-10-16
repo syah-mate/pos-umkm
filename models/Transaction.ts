@@ -7,7 +7,19 @@ export interface ITransactionItem {
   quantity: number;
   price: number;
   subtotal: number;
+  sizeType?: 'besar' | 'medium' | 'kecil';
+  unit?: string;
   notes?: string;
+}
+
+export interface ITransactionPayment {
+  _id?: mongoose.Types.ObjectId;
+  amount: number;
+  method: string;
+  date: Date;
+  notes?: string;
+  receivedByName?: string;
+  delivery?: mongoose.Types.ObjectId;
 }
 
 export interface ITransaction extends Document {
@@ -17,16 +29,21 @@ export interface ITransaction extends Document {
   tax: number;
   discount: number;
   total: number;
-  paymentMethod: 'cash' | 'qris' | 'debit' | 'credit' | 'e-wallet';
-  paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded';
+  paymentMethod: 'cash' | 'transfer' | 'qris' | 'debit' | 'credit' | 'e-wallet';
+  paymentStatus: 'unpaid' | 'partial' | 'paid' | 'pending' | 'failed' | 'refunded';
+  amountPaid: number;
+  payments: ITransactionPayment[];
+  dueDate?: Date;
+  deliveryStatus: 'pending' | 'scheduled' | 'on_delivery' | 'delivered' | 'not_required';
+  delivery?: mongoose.Types.ObjectId;
+  customerPhone?: string;
+  customerAddress?: string;
   cashReceived?: number;
   change?: number;
   customer?: mongoose.Types.ObjectId;
   customerName?: string;
   cashier:  mongoose.Types.ObjectId;
   cashierName: string;
-  shift?: mongoose.Types.ObjectId;
-  shiftName?: string;
   notes?: string;
   isSynced: boolean;
   syncedAt?: Date;
@@ -63,10 +80,43 @@ const TransactionItemSchema = new Schema<ITransactionItem>({
     required: true,
     min: 0,
   },
+  sizeType: {
+    type: String,
+    enum: ['besar', 'medium', 'kecil'],
+  },
+  unit: {
+    type: String,
+  },
   notes: {
     type: String,
   },
 }, { _id: false });
+
+const TransactionPaymentSchema = new Schema<ITransactionPayment>({
+  amount: {
+    type: Number,
+    required: true,
+    min: 0,
+  },
+  method: {
+    type: String,
+    default: 'cash',
+  },
+  date: {
+    type: Date,
+    default: Date.now,
+  },
+  notes: {
+    type: String,
+  },
+  receivedByName: {
+    type: String,
+  },
+  delivery: {
+    type: Schema.Types.ObjectId,
+    ref: 'Delivery',
+  },
+});
 
 const TransactionSchema = new Schema<ITransaction>(
   {
@@ -98,13 +148,38 @@ const TransactionSchema = new Schema<ITransaction>(
     },
     paymentMethod: {
       type: String,
-      enum: ['cash', 'qris', 'debit', 'credit', 'e-wallet'],
+      enum: ['cash', 'transfer', 'qris', 'debit', 'credit', 'e-wallet'],
       required: true,
     },
     paymentStatus: {
       type: String,
-      enum: ['pending', 'paid', 'failed', 'refunded'],
+      enum: ['unpaid', 'partial', 'paid', 'pending', 'failed', 'refunded'],
+      default: 'unpaid',
+    },
+    // Total yang sudah dibayar (DP + pelunasan)
+    amountPaid: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    payments: [TransactionPaymentSchema],
+    dueDate: {
+      type: Date,
+    },
+    deliveryStatus: {
+      type: String,
+      enum: ['pending', 'scheduled', 'on_delivery', 'delivered', 'not_required'],
       default: 'pending',
+    },
+    delivery: {
+      type: Schema.Types.ObjectId,
+      ref: 'Delivery',
+    },
+    customerPhone: {
+      type: String,
+    },
+    customerAddress: {
+      type: String,
     },
     cashReceived: {
       type: Number,
@@ -130,13 +205,6 @@ const TransactionSchema = new Schema<ITransaction>(
       type: String,
       required: true,
     },
-    shift: {
-      type: Schema.Types.ObjectId,
-      ref: 'Shift',
-    },
-    shiftName: {
-      type: String,
-    },
     notes: {
       type: String,
     },
@@ -159,6 +227,7 @@ TransactionSchema.index({ cashier: 1, createdAt: -1 });
 TransactionSchema.index({ customer: 1, createdAt: -1 });
 TransactionSchema.index({ createdAt: -1 });
 TransactionSchema.index({ paymentStatus: 1 });
+TransactionSchema.index({ deliveryStatus: 1 });
 
 const Transaction: Model<ITransaction> =
   mongoose.models.Transaction ||

@@ -1,6 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import PaymentModal from '@/components/PaymentModal';
+import {
+  DELIVERY_STATUS_BADGES,
+  DELIVERY_STATUS_LABELS,
+  PAYMENT_STATUS_BADGES,
+  PAYMENT_STATUS_LABELS,
+  getAmountPaid,
+  getRemaining,
+} from '@/lib/distribution';
 
 interface TransactionItem {
   product: string;
@@ -22,14 +31,16 @@ interface Transaction {
   total: number;
   paymentMethod: string;
   paymentStatus: string;
+  amountPaid?: number;
+  payments?: { amount: number; method: string; date: string; notes?: string; receivedByName?: string }[];
+  deliveryStatus?: string;
+  dueDate?: string;
   cashReceived?: number;
   change?: number;
   customer?: { name: string; phone: string };
   customerName?: string;
   cashier: { name: string } | string;
   cashierName: string;
-  shift?: string;
-  shiftName?: string;
   notes?: string;
   createdAt: string;
   updatedAt: string;
@@ -45,6 +56,8 @@ export default function TransactionsPage() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('');
+  const [paymentStatus, setPaymentStatus] = useState('');
+  const [paying, setPaying] = useState<Transaction | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
@@ -65,7 +78,7 @@ export default function TransactionsPage() {
     if (startDate && endDate) {
       loadTransactions();
     }
-  }, [startDate, endDate, paymentMethod]);
+  }, [startDate, endDate, paymentMethod, paymentStatus]);
 
   const loadTransactions = async () => {
     try {
@@ -76,6 +89,7 @@ export default function TransactionsPage() {
       if (startDate) url += `startDate=${startDate}&`;
       if (endDate) url += `endDate=${endDate}&`;
       if (paymentMethod) url += `paymentMethod=${paymentMethod}&`;
+      if (paymentStatus) url += `paymentStatus=${paymentStatus}&`;
       
       const response = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` },
@@ -97,8 +111,7 @@ export default function TransactionsPage() {
     return (
       transaction.invoiceNumber.toLowerCase().includes(query) ||
       transaction.cashierName.toLowerCase().includes(query) ||
-      transaction.customerName?.toLowerCase().includes(query) ||
-      transaction.shiftName?.toLowerCase().includes(query)
+      transaction.customerName?.toLowerCase().includes(query)
     );
   });
 
@@ -148,10 +161,7 @@ export default function TransactionsPage() {
   return (
     <div>
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Riwayat Transaksi</h1>
-        <p className="text-gray-600 text-sm mt-1">Kelola dan pantau semua transaksi penjualan</p>
-      </div>
+      <p className="text-gray-600 text-sm mb-4">Kelola dan pantau semua transaksi penjualan</p>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
@@ -199,7 +209,7 @@ export default function TransactionsPage() {
 
       {/* Filters */}
       <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Tanggal Mulai
@@ -235,10 +245,28 @@ export default function TransactionsPage() {
             >
               <option value="">Semua Metode</option>
               <option value="cash">Cash</option>
+              <option value="transfer">Transfer</option>
               <option value="qris">QRIS</option>
               <option value="debit">Debit</option>
               <option value="credit">Credit</option>
               <option value="e-wallet">E-Wallet</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Status Bayar
+            </label>
+            <select
+              value={paymentStatus}
+              onChange={(e) => setPaymentStatus(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none"
+            >
+              <option value="">Semua Status</option>
+              <option value="outstanding">Belum Lunas</option>
+              <option value="paid">Lunas</option>
+              <option value="partial">Bayar Sebagian</option>
+              <option value="unpaid">Hutang</option>
             </select>
           </div>
 
@@ -263,31 +291,31 @@ export default function TransactionsPage() {
           <table className="w-full">
             <thead className="bg-gray-50 border-b">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Invoice
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Tanggal & Waktu
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Kasir
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Shift
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Pelanggan
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Items
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Pembayaran
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Total
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Status
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Aksi
                 </th>
               </tr>
@@ -295,43 +323,65 @@ export default function TransactionsPage() {
             <tbody className="divide-y divide-gray-200">
               {filteredTransactions.map(transaction => (
                 <tr key={transaction._id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4">
-                    <div className="font-mono text-sm font-semibold text-gray-900">
+                  <td className="px-4 py-3">
+                    <div className="font-mono text-sm font-semibold text-gray-900 whitespace-nowrap">
                       {transaction.invoiceNumber}
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">
+                  <td className="px-4 py-3 text-sm text-gray-900 whitespace-nowrap">
                     {formatDateTime(transaction.createdAt)}
                   </td>
-                  <td className="px-6 py-4 text-sm">
+                  <td className="px-4 py-3 text-sm">
                     <div className="font-semibold text-gray-900">{transaction.cashierName}</div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
-                    {transaction.shiftName || '-'}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">
+                  <td className="px-4 py-3 text-sm text-gray-900">
                     {transaction.customerName || 'Pelanggan Umum'}
                   </td>
-                  <td className="px-6 py-4 text-center">
-                    <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium">
+                  <td className="px-4 py-3 text-center">
+                    <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium whitespace-nowrap">
                       {transaction.items.length} item
                     </span>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 py-3">
                     <span className={`px-3 py-1 rounded-full text-xs font-medium uppercase ${getPaymentMethodBadge(transaction.paymentMethod)}`}>
                       {transaction.paymentMethod}
                     </span>
                   </td>
-                  <td className="px-6 py-4 font-bold text-green-600">
+                  <td className="px-4 py-3 font-bold text-green-600 whitespace-nowrap">
                     {formatCurrency(transaction.total)}
+                    {getRemaining(transaction) > 0 && (
+                      <div className="text-xs font-medium text-red-600">sisa {formatCurrency(getRemaining(transaction))}</div>
+                    )}
                   </td>
-                  <td className="px-6 py-4">
-                    <button
-                      onClick={() => viewDetail(transaction)}
-                      className="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
-                    >
-                      Detail
-                    </button>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-col gap-1 items-start">
+                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${PAYMENT_STATUS_BADGES[transaction.paymentStatus] || 'bg-gray-100 text-gray-700'}`}>
+                        {PAYMENT_STATUS_LABELS[transaction.paymentStatus] || transaction.paymentStatus}
+                      </span>
+                      {transaction.deliveryStatus && (
+                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${DELIVERY_STATUS_BADGES[transaction.deliveryStatus]}`}>
+                          {DELIVERY_STATUS_LABELS[transaction.deliveryStatus]}
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex gap-1.5">
+                      <button
+                        onClick={() => viewDetail(transaction)}
+                        className="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
+                      >
+                        Detail
+                      </button>
+                      {getRemaining(transaction) > 0 && (
+                        <button
+                          onClick={() => setPaying(transaction)}
+                          className="px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium"
+                        >
+                          Bayar
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -377,10 +427,6 @@ export default function TransactionsPage() {
                 <p className="font-semibold">{selectedTransaction.cashierName}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-600">Shift</p>
-                <p className="font-semibold">{selectedTransaction.shiftName || '-'}</p>
-              </div>
-              <div>
                 <p className="text-sm text-gray-600">Pelanggan</p>
                 <p className="font-semibold">{selectedTransaction.customerName || 'Pelanggan Umum'}</p>
               </div>
@@ -390,8 +436,8 @@ export default function TransactionsPage() {
               </div>
               <div>
                 <p className="text-sm text-gray-600">Status</p>
-                <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium uppercase">
-                  {selectedTransaction.paymentStatus}
+                <span className={`px-3 py-1 rounded-full text-xs font-medium ${PAYMENT_STATUS_BADGES[selectedTransaction.paymentStatus] || 'bg-gray-100 text-gray-700'}`}>
+                  {PAYMENT_STATUS_LABELS[selectedTransaction.paymentStatus] || selectedTransaction.paymentStatus}
                 </span>
               </div>
             </div>
@@ -448,7 +494,36 @@ export default function TransactionsPage() {
                 <span className="text-green-600">{formatCurrency(selectedTransaction.total)}</span>
               </div>
 
-              {selectedTransaction.paymentMethod === 'cash' && (
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Terbayar:</span>
+                <span className="font-semibold">{formatCurrency(getAmountPaid(selectedTransaction))}</span>
+              </div>
+              {getRemaining(selectedTransaction) > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Sisa Tagihan:</span>
+                  <span className="font-semibold text-red-600">{formatCurrency(getRemaining(selectedTransaction))}</span>
+                </div>
+              )}
+
+              {selectedTransaction.payments && selectedTransaction.payments.length > 0 && (
+                <div className="pt-2">
+                  <p className="text-sm font-semibold text-gray-700 mb-1">Riwayat Pembayaran</p>
+                  <div className="border rounded-lg divide-y text-xs">
+                    {selectedTransaction.payments.map((p, idx) => (
+                      <div key={idx} className="px-3 py-1.5 flex justify-between">
+                        <span className="text-gray-600">
+                          {formatDateTime(p.date)} · {p.method.toUpperCase()}
+                          {p.receivedByName ? ` · ${p.receivedByName}` : ''}
+                          {p.notes ? ` · ${p.notes}` : ''}
+                        </span>
+                        <span className="font-semibold">{formatCurrency(p.amount)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {selectedTransaction.paymentMethod === 'cash' && selectedTransaction.paymentStatus === 'paid' && (
                 <>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Uang Diterima:</span>
@@ -479,6 +554,17 @@ export default function TransactionsPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {paying && (
+        <PaymentModal
+          transaction={paying}
+          onClose={() => setPaying(null)}
+          onSaved={() => {
+            setPaying(null);
+            loadTransactions();
+          }}
+        />
       )}
     </div>
   );

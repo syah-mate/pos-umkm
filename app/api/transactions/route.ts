@@ -3,57 +3,9 @@ import dbConnect from '@/lib/mongodb';
 import Transaction from '@/models/Transaction';
 import Product from '@/models/Product';
 import Customer from '@/models/Customer';
-import Recipe from '@/models/Recipe';
 import User from '@/models/User';
-import Shift from '@/models/Shift';
-
-// Unit conversion helper function
-function convertUnit(quantity: number, fromUnit: string, toUnit: string): number {
-  // If units are the same, no conversion needed
-  if (fromUnit === toUnit) {
-    return quantity;
-  }
-
-  // Conversion table to base units (gram for weight, ml for volume)
-  const toBaseUnit: { [key: string]: number } = {
-    // Weight conversions (to gram)
-    'gram': 1,
-    'kg': 1000,
-    
-    // Volume conversions (to ml)
-    'ml': 1,
-    'liter': 1000,
-    
-    // No conversion for discrete units
-    'pcs': 1,
-    'box': 1,
-    'pack': 1,
-  };
-
-  // Check if units are in the same category
-  const weightUnits = ['gram', 'kg'];
-  const volumeUnits = ['ml', 'liter'];
-  const discreteUnits = ['pcs', 'box', 'pack'];
-
-  const fromCategory = weightUnits.includes(fromUnit) ? 'weight' 
-    : volumeUnits.includes(fromUnit) ? 'volume' 
-    : 'discrete';
-  
-  const toCategory = weightUnits.includes(toUnit) ? 'weight' 
-    : volumeUnits.includes(toUnit) ? 'volume' 
-    : 'discrete';
-
-  // Cannot convert between different categories
-  if (fromCategory !== toCategory) {
-    throw new Error(`Cannot convert from ${fromUnit} to ${toUnit}`);
-  }
-
-  // Convert to base unit then to target unit
-  const baseQuantity = quantity * toBaseUnit[fromUnit];
-  const convertedQuantity = baseQuantity / toBaseUnit[toUnit];
-
-  return convertedQuantity;
-}
+import '@/models/Delivery';
+import { computePaymentStatus } from '@/lib/distribution';
 
 // Helper function to round stock to 2 decimal places
 function roundStock(value: number): number {
@@ -73,6 +25,11 @@ export async function GET(request: NextRequest) {
     const endDate = searchParams.get('endDate');
     const cashier = searchParams.get('cashier');
     const paymentMethod = searchParams.get('paymentMethod');
+    const paymentStatus = searchParams.get('paymentStatus'); // paid | partial | unpaid | outstanding
+    const deliveryStatus = searchParams.get('deliveryStatus');
+    const customer = searchParams.get('customer');
+    const search = searchParams.get('search');
+    const limit = Math.min(Number(searchParams.get('limit')) || 100, 1000);
     
     const query: any = {};
     
@@ -98,12 +55,36 @@ export async function GET(request: NextRequest) {
     if (paymentMethod) {
       query.paymentMethod = paymentMethod;
     }
+
+    if (paymentStatus === 'outstanding') {
+      query.paymentStatus = { $in: ['unpaid', 'partial', 'pending'] };
+    } else if (paymentStatus === 'unpaid') {
+      query.paymentStatus = { $in: ['unpaid', 'pending'] };
+    } else if (paymentStatus) {
+      query.paymentStatus = paymentStatus;
+    }
+
+    if (deliveryStatus) {
+      query.deliveryStatus = { $in: deliveryStatus.split(',') };
+    }
+
+    if (customer) {
+      query.customer = customer;
+    }
+
+    if (search) {
+      query.$or = [
+        { invoiceNumber: { $regex: search, $options: 'i' } },
+        { customerName: { $regex: search, $options: 'i' } },
+      ];
+    }
     
     const transactions = await Transaction.find(query)
       .populate('cashier', 'name')
-      .populate('customer', 'name phone')
+      .populate('customer', 'name phone address')
+      .populate('delivery', 'deliveryNumber name status')
       .sort({ createdAt: -1 })
-      .limit(100);
+      .limit(limit);
     
     return NextResponse.json({ data: transactions }, { status: 200 });
   } catch (error: any) {
@@ -139,94 +120,51 @@ export async function POST(request: NextRequest) {
     });
     const invoiceNumber = `INV-${dateStr}-${String(count + 1).padStart(4, '0')}`;
 
-    // Process stock deduction for each item
+    const total = Number(body.total) || 0;
+    const amountPaid = Math.min(Math.max(Number(body.amountPaid ?? total) || 0, 0), total);
+    const paymentStatus = computePaymentStatus(total, amountPaid);
+
+    // Transaksi hutang / bayar sebagian wajib punya pelanggan agar bisa ditagih
+    if (paymentStatus !== 'paid' && !body.customer) {
+      return NextResponse.json(
+        { error: 'Transaksi belum lunas wajib memilih pelanggan' },
+        { status: 400 }
+      );
+    }
+
+    // Validate stock for all items before deducting anything
     for (const item of body.items) {
       const product = await Product.findById(item.product);
-      
       if (!product) {
         return NextResponse.json(
           { error: `Product ${item.productName} not found` },
           { status: 404 }
         );
       }
+      if (product.stock < item.quantity) {
+        return NextResponse.json(
+          { error: `Stok tidak cukup untuk produk: ${product.name} (tersisa ${product.stock})` },
+          { status: 400 }
+        );
+      }
+      // Snapshot tipe ukuran & satuan untuk perhitungan muatan dan surat jalan
+      item.sizeType = product.sizeType || 'kecil';
+      item.unit = product.unit;
+    }
 
-      // Check if product has recipe
-      if (product.hasRecipe) {
-        const recipe = await Recipe.findOne({ product: product._id, isActive: true })
-          .populate('ingredients.product');
-        
-        if (recipe) {
-          // First, check if we have enough product stock
-          if (product.stock < item.quantity) {
-            return NextResponse.json(
-              { error: `Insufficient stock for product: ${product.name}` },
-              { status: 400 }
-            );
-          }
-
-          // Deduct ingredients stock based on recipe
-          for (const ingredient of recipe.ingredients) {
-            const ingredientProduct = await Product.findById(ingredient.product);
-            if (ingredientProduct) {
-              // Calculate quantity needed based on recipe
-              const qtyNeededInRecipeUnit = ingredient.quantity * item.quantity;
-              
-              // Convert from recipe unit to product stock unit
-              let qtyToDeduct: number;
-              try {
-                qtyToDeduct = convertUnit(
-                  qtyNeededInRecipeUnit,
-                  ingredient.unit,
-                  ingredientProduct.unit
-                );
-              } catch (error: any) {
-                return NextResponse.json(
-                  { error: `Unit conversion error: ${error.message}` },
-                  { status: 400 }
-                );
-              }
-              
-              if (ingredientProduct.stock < qtyToDeduct) {
-                return NextResponse.json(
-                  { error: `Insufficient stock for ingredient: ${ingredient.productName}. Need ${qtyToDeduct} ${ingredientProduct.unit}, only ${ingredientProduct.stock} ${ingredientProduct.unit} available` },
-                  { status: 400 }
-                );
-              }
-              
-              ingredientProduct.stock = roundStock(ingredientProduct.stock - qtyToDeduct);
-              await ingredientProduct.save();
-            }
-          }
-
-          // IMPORTANT: Also deduct the product stock itself (finished goods)
-          product.stock = roundStock(product.stock - item.quantity);
-          await product.save();
-        } else {
-          // If no recipe found, deduct product stock directly
-          if (product.stock < item.quantity) {
-            return NextResponse.json(
-              { error: `Insufficient stock for product: ${product.name}` },
-              { status: 400 }
-            );
-          }
-          product.stock = roundStock(product.stock - item.quantity);
-          await product.save();
-        }
-      } else {
-        // Normal product without recipe
-        if (product.stock < item.quantity) {
-          return NextResponse.json(
-            { error: `Insufficient stock for product: ${product.name}` },
-            { status: 400 }
-          );
-        }
+    // Deduct stock (already validated above)
+    for (const item of body.items) {
+      const product = await Product.findById(item.product);
+      if (product) {
         product.stock = roundStock(product.stock - item.quantity);
         await product.save();
       }
     }
 
     // Update customer stats if provided
+    let customerDoc = null;
     if (body.customer) {
+      customerDoc = await Customer.findById(body.customer);
       await Customer.findByIdAndUpdate(body.customer, {
         $inc: {
           totalSpent: body.total,
@@ -237,32 +175,27 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Find active shift for this cashier
-    let activeShift = null;
-    if (body.cashier) {
-      activeShift = await Shift.findOne({
-        cashier: body.cashier,
-        status: 'open',
-      });
-    }
-
     // Create transaction
     const transaction = await Transaction.create({
       ...body,
       invoiceNumber,
-      shift: activeShift?._id, // Link to active shift
-      shiftName: activeShift?.shiftName, // Save shift name
-      paymentStatus: 'paid',
+      paymentStatus,
+      amountPaid,
+      payments: amountPaid > 0
+        ? [{
+            amount: amountPaid,
+            method: body.paymentMethod,
+            date: new Date(),
+            notes: paymentStatus === 'paid' ? 'Pembayaran lunas di kasir' : 'DP di kasir',
+            receivedByName: body.cashierName,
+          }]
+        : [],
+      deliveryStatus: body.needsDelivery === false ? 'not_required' : 'pending',
+      customerPhone: customerDoc?.phone,
+      customerAddress: customerDoc?.address,
       isSynced: true,
       syncedAt: new Date(),
     });
-
-    // Update shift counters
-    if (activeShift) {
-      activeShift.totalTransactions += 1;
-      activeShift.totalSales += body.total;
-      await activeShift.save();
-    }
 
     // Ensure User model is registered before populate
     await User.init();
