@@ -153,7 +153,7 @@ export default function DeliveryFormModal({ delivery, onClose, onSaved }: Props)
       if (response.ok) {
         onSaved();
       } else {
-        alert(result.error || 'Gagal menyimpan plan pengiriman!');
+        alert(result.error || 'Gagal menyimpan pengiriman!');
       }
     } catch (error) {
       console.error('Error saving delivery:', error);
@@ -170,7 +170,7 @@ export default function DeliveryFormModal({ delivery, onClose, onSaved }: Props)
         className="bg-white rounded-xl w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden"
       >
         <div className="p-6 border-b">
-          <h2 className="text-2xl font-bold mb-4">{delivery ? 'Edit Plan Pengiriman' : 'Buat Plan Pengiriman'}</h2>
+          <h2 className="text-2xl font-bold mb-4">{delivery ? 'Edit Pengiriman' : 'Catat Pengiriman'}</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Nama Pengiriman *</label>
@@ -348,7 +348,7 @@ export default function DeliveryFormModal({ delivery, onClose, onSaved }: Props)
             disabled={saving}
             className="px-6 py-2.5 bg-amber-600 text-white hover:bg-amber-700 rounded-lg font-medium disabled:opacity-60"
           >
-            {saving ? 'Menyimpan...' : delivery ? 'Simpan Perubahan' : 'Buat Plan'}
+            {saving ? 'Menyimpan...' : delivery ? 'Simpan Perubahan' : 'Simpan Pengiriman'}
           </button>
         </div>
       </form>

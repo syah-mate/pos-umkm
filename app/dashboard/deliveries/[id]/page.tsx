@@ -7,8 +7,6 @@ import PaymentModal from '@/components/PaymentModal';
 import ExpenseModal, { DeliveryExpense } from '@/components/ExpenseModal';
 import DeliveryFormModal, { QueueTransaction } from '@/components/DeliveryFormModal';
 import {
-  DELIVERY_PLAN_STATUS_BADGES,
-  DELIVERY_PLAN_STATUS_LABELS,
   Load,
   PAYMENT_STATUS_BADGES,
   PAYMENT_STATUS_LABELS,
@@ -34,12 +32,9 @@ interface Delivery {
   vehicleName: string;
   plateNumber?: string;
   driverName: string;
-  status: string;
   notes?: string;
   transactions: DeliveryTransaction[];
   expenses: DeliveryExpense[];
-  departedAt?: string;
-  completedAt?: string;
   summary: {
     transactionCount: number;
     totalValue: number;
@@ -82,26 +77,8 @@ export default function DeliveryDetailPage() {
     }
   };
 
-  const changeStatus = async (status: string, confirmText: string) => {
-    if (!confirm(confirmText)) return;
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/api/deliveries/${id}/status`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ status }),
-      });
-      const result = await response.json();
-      if (response.ok) loadDelivery();
-      else alert(result.error || 'Gagal mengubah status!');
-    } catch (error) {
-      console.error('Error changing status:', error);
-      alert('Terjadi kesalahan!');
-    }
-  };
-
-  const cancelDelivery = async () => {
-    if (!confirm('Batalkan plan pengiriman ini? Transaksi akan dikembalikan ke antrian kirim.')) return;
+  const deleteDelivery = async () => {
+    if (!confirm('Hapus pengiriman ini? Transaksi akan dikembalikan ke antrian kirim.')) return;
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(`/api/deliveries/${id}`, {
@@ -110,9 +87,9 @@ export default function DeliveryDetailPage() {
       });
       const result = await response.json();
       if (response.ok) router.push('/dashboard/deliveries');
-      else alert(result.error || 'Gagal membatalkan!');
+      else alert(result.error || 'Gagal menghapus!');
     } catch (error) {
-      console.error('Error cancelling delivery:', error);
+      console.error('Error deleting delivery:', error);
       alert('Terjadi kesalahan!');
     }
   };
@@ -133,25 +110,19 @@ export default function DeliveryDetailPage() {
   }
 
   const { summary } = delivery;
-  const isActive = delivery.status !== 'cancelled';
   const capacity = delivery.vehicle?.capacity;
 
   return (
     <div>
       <Link href="/dashboard/deliveries" className="text-sm text-amber-700 hover:underline">
-        ← Plan Pengiriman
+        ← Pengiriman
       </Link>
 
       {/* Header */}
       <div className="bg-white rounded-xl shadow-md p-6 mt-2 mb-6">
         <div className="flex flex-wrap justify-between items-start gap-4">
           <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-gray-800">{delivery.name}</h1>
-              <span className={`px-3 py-1 rounded-full text-xs font-medium ${DELIVERY_PLAN_STATUS_BADGES[delivery.status]}`}>
-                {DELIVERY_PLAN_STATUS_LABELS[delivery.status]}
-              </span>
-            </div>
+            <h1 className="text-2xl font-bold text-gray-800">{delivery.name}</h1>
             <p className="text-sm text-gray-600 mt-1">
               <span className="font-mono">{delivery.deliveryNumber}</span> ·{' '}
               {new Date(delivery.date).toLocaleDateString('id-ID', { dateStyle: 'full' })}
@@ -163,54 +134,30 @@ export default function DeliveryDetailPage() {
           </div>
 
           <div className="flex flex-wrap gap-2">
-            {delivery.status === 'planned' && (
-              <>
-                <button
-                  onClick={() => setShowEdit(true)}
-                  className="px-4 py-2 bg-gray-200 text-gray-900 rounded-lg hover:bg-gray-300 text-sm font-medium"
-                >
-                  ✏️ Edit
-                </button>
-                <button
-                  onClick={() => changeStatus('on_delivery', 'Tandai pengiriman berangkat?')}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm font-medium"
-                >
-                  🚚 Berangkat
-                </button>
-              </>
-            )}
-            {(delivery.status === 'planned' || delivery.status === 'on_delivery') && (
-              <button
-                onClick={() => changeStatus('completed', 'Tandai pengiriman selesai? Semua transaksi akan berstatus terkirim.')}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium"
-              >
-                ✅ Selesai
-              </button>
-            )}
-            {isActive && (
-              <>
-                <button
-                  onClick={() => setShowExpenses(true)}
-                  className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 text-sm font-medium"
-                >
-                  ⛽ Klaim Pengeluaran
-                </button>
-                <button
-                  onClick={() => window.open(`/print/surat-jalan/${delivery._id}`, '_blank')}
-                  className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 text-sm font-medium"
-                >
-                  🖨️ Cetak Surat Jalan
-                </button>
-              </>
-            )}
-            {delivery.status === 'planned' && (
-              <button
-                onClick={cancelDelivery}
-                className="px-4 py-2 bg-red-100 text-red-800 rounded-lg hover:bg-red-200 text-sm font-medium"
-              >
-                Batalkan
-              </button>
-            )}
+            <button
+              onClick={() => setShowEdit(true)}
+              className="px-4 py-2 bg-gray-200 text-gray-900 rounded-lg hover:bg-gray-300 text-sm font-medium"
+            >
+              ✏️ Edit
+            </button>
+            <button
+              onClick={() => setShowExpenses(true)}
+              className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 text-sm font-medium"
+            >
+              ⛽ Klaim Pengeluaran
+            </button>
+            <button
+              onClick={() => window.open(`/print/surat-jalan/${delivery._id}`, '_blank')}
+              className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 text-sm font-medium"
+            >
+              🖨️ Cetak Surat Jalan
+            </button>
+            <button
+              onClick={deleteDelivery}
+              className="px-4 py-2 bg-red-100 text-red-800 rounded-lg hover:bg-red-200 text-sm font-medium"
+            >
+              Hapus
+            </button>
           </div>
         </div>
 
@@ -327,7 +274,7 @@ export default function DeliveryDetailPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      {remaining > 0 && isActive && (
+                      {remaining > 0 && (
                         <button
                           onClick={() => setPaying(t)}
                           className="px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium whitespace-nowrap"
@@ -348,14 +295,12 @@ export default function DeliveryDetailPage() {
       <div className="bg-white rounded-xl shadow-md overflow-hidden">
         <div className="px-6 py-4 border-b flex justify-between items-center">
           <h2 className="font-bold text-gray-800">Pengeluaran Pengiriman</h2>
-          {isActive && (
-            <button
-              onClick={() => setShowExpenses(true)}
-              className="px-3 py-1 bg-orange-500 text-white rounded-lg hover:bg-orange-600 text-sm font-medium"
-            >
-              + Klaim
-            </button>
-          )}
+          <button
+            onClick={() => setShowExpenses(true)}
+            className="px-3 py-1 bg-orange-500 text-white rounded-lg hover:bg-orange-600 text-sm font-medium"
+          >
+            + Klaim
+          </button>
         </div>
         {delivery.expenses.length === 0 ? (
           <p className="px-6 py-6 text-sm text-gray-500 text-center">Belum ada pengeluaran</p>

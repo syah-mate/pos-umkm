@@ -3,15 +3,11 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  PAYMENT_STATUS_BADGES,
-  PAYMENT_STATUS_LABELS,
   SIZE_BADGES,
   SIZE_LABELS,
   SIZE_TYPES,
   SizeType,
-  computePaymentStatus,
   formatCurrency,
-  formatNumberWithDots,
   loadOfItems,
 } from '@/lib/distribution';
 
@@ -46,14 +42,6 @@ interface Warehouse {
   name: string;
 }
 
-type PaymentType = 'paid' | 'partial' | 'unpaid';
-
-const PAYMENT_TYPES: { value: PaymentType; label: string; hint: string }[] = [
-  { value: 'paid', label: 'Lunas', hint: 'Dibayar penuh sekarang' },
-  { value: 'partial', label: 'Bayar Sebagian', hint: 'DP, sisanya ditagih' },
-  { value: 'unpaid', label: 'Hutang', hint: 'Bayar saat kirim / tempo' },
-];
-
 function productIcon(product: Product) {
   const name = `${product.category?.name || ''} ${product.name}`.toLowerCase();
   if (name.includes('lpg') || name.includes('gas')) return '🔥';
@@ -74,12 +62,8 @@ export default function POSPage() {
   const [selectedWarehouse, setSelectedWarehouse] = useState('');
   const [selectedSize, setSelectedSize] = useState<SizeType | ''>('');
 
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [paymentType, setPaymentType] = useState<PaymentType>('paid');
-  const [paymentMethod, setPaymentMethod] = useState('cash');
-  const [amountReceived, setAmountReceived] = useState(0);
+  const [showSaveModal, setShowSaveModal] = useState(false);
   const [dueDate, setDueDate] = useState('');
-  const [needsDelivery, setNeedsDelivery] = useState(true);
   const [notes, setNotes] = useState('');
   const [processing, setProcessing] = useState(false);
   const [showReceipt, setShowReceipt] = useState(false);
@@ -192,43 +176,23 @@ export default function POSPage() {
       alert('Keranjang kosong!');
       return;
     }
-    setPaymentType('paid');
-    setPaymentMethod('cash');
-    setAmountReceived(0);
     setDueDate('');
-    setNeedsDelivery(true);
     setNotes('');
-    setShowPaymentModal(true);
+    setShowSaveModal(true);
   };
 
-  // Nominal yang benar-benar masuk sebagai pembayaran (tanpa kembalian)
-  const paidAmount = () => {
-    const total = calculateTotal();
-    if (paymentType === 'paid') return total;
-    if (paymentType === 'unpaid') return 0;
-    return Math.min(amountReceived, total);
-  };
-
-  const processPayment = async () => {
+  // Kasir hanya menyimpan transaksi; pembayaran dicatat saat pengiriman
+  const saveTransaction = async () => {
     const total = calculateTotal();
 
-    if (paymentType !== 'paid' && !selectedCustomer) {
-      alert('Transaksi hutang / bayar sebagian wajib memilih pelanggan.');
-      return;
-    }
-    if (paymentType === 'paid' && paymentMethod === 'cash' && amountReceived < total) {
-      alert('Uang yang diterima kurang!');
-      return;
-    }
-    if (paymentType === 'partial' && (amountReceived <= 0 || amountReceived >= total)) {
-      alert('Nominal DP harus lebih dari 0 dan kurang dari total.');
+    if (!selectedCustomer) {
+      alert('Pilih pelanggan dulu. Pembayaran ditagih saat pengiriman.');
       return;
     }
 
     try {
       setProcessing(true);
       const user = JSON.parse(localStorage.getItem('user') || '{}');
-      const amountPaid = paidAmount();
 
       const transactionData = {
         items: cart.map((item) => ({
@@ -243,17 +207,12 @@ export default function POSPage() {
         tax: 0,
         discount: 0,
         total,
-        paymentMethod,
-        amountPaid,
-        cashReceived: paymentType === 'paid' && paymentMethod === 'cash' ? amountReceived : amountPaid,
-        change: paymentType === 'paid' && paymentMethod === 'cash' ? amountReceived - total : 0,
-        dueDate: paymentType !== 'paid' && dueDate ? dueDate : undefined,
-        needsDelivery,
+        dueDate: dueDate || undefined,
         notes: notes || undefined,
         cashier: user.id || user._id,
         cashierName: user.name,
-        customer: selectedCustomer?._id,
-        customerName: selectedCustomer?.name,
+        customer: selectedCustomer._id,
+        customerName: selectedCustomer.name,
       };
 
       const response = await fetch('/api/transactions', {
@@ -266,11 +225,10 @@ export default function POSPage() {
       if (response.ok) {
         setLastReceipt({
           ...transactionData,
-          paymentStatus: computePaymentStatus(total, amountPaid),
           invoiceNumber: result.transaction.invoiceNumber,
           createdAt: result.transaction.createdAt,
         });
-        setShowPaymentModal(false);
+        setShowSaveModal(false);
         setShowReceipt(true);
         clearCart();
         loadProducts(); // Reload untuk update stock
@@ -278,8 +236,8 @@ export default function POSPage() {
         alert(result.error || result.message || 'Gagal memproses transaksi!');
       }
     } catch (error) {
-      console.error('Error processing payment:', error);
-      alert('Terjadi kesalahan saat memproses pembayaran!');
+      console.error('Error saving transaction:', error);
+      alert('Terjadi kesalahan saat menyimpan transaksi!');
     } finally {
       setProcessing(false);
     }
@@ -544,16 +502,16 @@ export default function POSPage() {
             disabled={cart.length === 0}
             className="w-full py-3 bg-amber-600 text-white hover:bg-amber-700 rounded-lg font-semibold transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed focus:ring-4 focus:ring-amber-400/50 focus:outline-none"
           >
-            Bayar
+            Simpan Transaksi
           </button>
         </div>
       </div>
 
-      {/* Payment Modal */}
-      {showPaymentModal && (
+      {/* Save Transaction Modal */}
+      {showSaveModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <h2 className="text-2xl font-bold mb-4">Pembayaran</h2>
+            <h2 className="text-2xl font-bold mb-4">Simpan Transaksi</h2>
 
             <div className="mb-4 flex justify-between items-end">
               <div>
@@ -561,110 +519,27 @@ export default function POSPage() {
                 <p className="text-3xl font-bold text-amber-600">{formatCurrency(total)}</p>
               </div>
               <div className="text-right text-sm text-gray-600">
-                <p>{selectedCustomer?.name || 'Pelanggan Umum'}</p>
+                <p>{selectedCustomer?.name || 'Belum pilih pelanggan'}</p>
               </div>
             </div>
+
+            <div className="mb-4 p-3 bg-amber-50 rounded-lg text-sm text-amber-800">
+              Pembayaran tidak dilakukan di kasir. Tagihan dibayar saat pengiriman, dan transaksi otomatis masuk
+              antrian Pengiriman.
+            </div>
+            {!selectedCustomer && (
+              <p className="text-xs text-red-600 mb-4">⚠️ Pilih pelanggan dulu sebelum menyimpan transaksi.</p>
+            )}
 
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Status Pembayaran</label>
-              <div className="grid grid-cols-3 gap-2">
-                {PAYMENT_TYPES.map((type) => (
-                  <button
-                    key={type.value}
-                    onClick={() => {
-                      setPaymentType(type.value);
-                      setAmountReceived(0);
-                    }}
-                    className={`p-2 rounded-lg text-left border focus:ring-4 focus:ring-amber-400/50 focus:outline-none ${
-                      paymentType === type.value
-                        ? 'bg-amber-600 text-white border-amber-600'
-                        : 'bg-white text-gray-900 border-gray-300 hover:bg-gray-50'
-                    }`}
-                  >
-                    <div className="font-semibold text-sm">{type.label}</div>
-                    <div className={`text-xs ${paymentType === type.value ? 'text-amber-100' : 'text-gray-500'}`}>
-                      {type.hint}
-                    </div>
-                  </button>
-                ))}
-              </div>
-              {paymentType !== 'paid' && !selectedCustomer && (
-                <p className="text-xs text-red-600 mt-2">⚠️ Pilih pelanggan dulu untuk transaksi yang belum lunas.</p>
-              )}
-            </div>
-
-            {paymentType !== 'unpaid' && (
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Metode Pembayaran</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {['cash', 'transfer', 'qris'].map((method) => (
-                    <button
-                      key={method}
-                      onClick={() => setPaymentMethod(method)}
-                      className={`py-2.5 rounded-lg font-medium text-sm focus:ring-4 focus:ring-amber-400/50 focus:outline-none ${
-                        paymentMethod === method ? 'bg-amber-600 text-white' : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
-                      }`}
-                    >
-                      {method.toUpperCase()}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {((paymentType === 'paid' && paymentMethod === 'cash') || paymentType === 'partial') && (
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {paymentType === 'partial' ? 'Nominal DP' : 'Uang Diterima'}
-                </label>
-                <div className="relative">
-                  <span className="absolute left-4 top-3 text-gray-500">Rp</span>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={amountReceived ? formatNumberWithDots(amountReceived) : ''}
-                    onChange={(e) => setAmountReceived(Number(e.target.value.replace(/[^0-9]/g, '')) || 0)}
-                    className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg text-lg focus:ring-4 focus:ring-amber-400/50 focus:outline-none"
-                    placeholder="0"
-                    autoFocus
-                  />
-                </div>
-                {paymentType === 'paid' && amountReceived >= total && (
-                  <div className="mt-2 p-3 bg-green-50 rounded-lg flex justify-between">
-                    <span className="text-sm text-gray-600">Kembalian</span>
-                    <span className="font-bold text-green-600">{formatCurrency(amountReceived - total)}</span>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {paymentType !== 'paid' && (
-              <div className="mb-4 grid grid-cols-2 gap-3">
-                <div className="p-3 bg-red-50 rounded-lg">
-                  <p className="text-xs text-gray-600">Sisa Tagihan</p>
-                  <p className="font-bold text-red-600">{formatCurrency(total - paidAmount())}</p>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Jatuh Tempo (opsional)</label>
-                  <input
-                    type="date"
-                    value={dueDate}
-                    onChange={(e) => setDueDate(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none"
-                  />
-                </div>
-              </div>
-            )}
-
-            <label className="flex items-center gap-2 mb-3 text-sm text-gray-800 cursor-pointer">
+              <label className="block text-xs font-medium text-gray-700 mb-1">Jatuh Tempo (opsional)</label>
               <input
-                type="checkbox"
-                checked={needsDelivery}
-                onChange={(e) => setNeedsDelivery(e.target.checked)}
-                className="w-4 h-4 accent-amber-600"
+                type="date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none"
               />
-              Barang perlu dikirim (masuk antrian Plan Pengiriman)
-            </label>
+            </div>
 
             <div className="mb-4">
               <input
@@ -678,17 +553,17 @@ export default function POSPage() {
 
             <div className="flex gap-3">
               <button
-                onClick={() => setShowPaymentModal(false)}
+                onClick={() => setShowSaveModal(false)}
                 className="flex-1 py-3 bg-gray-200 text-gray-900 hover:bg-gray-300 rounded-lg font-medium focus:ring-4 focus:ring-gray-500/50 focus:outline-none"
               >
                 Batal
               </button>
               <button
-                onClick={processPayment}
-                disabled={processing}
+                onClick={saveTransaction}
+                disabled={processing || !selectedCustomer}
                 className="flex-1 py-3 bg-amber-600 text-white hover:bg-amber-700 rounded-lg font-medium disabled:opacity-60 focus:ring-4 focus:ring-amber-400/50 focus:outline-none"
               >
-                {processing ? 'Memproses...' : 'Simpan Transaksi'}
+                {processing ? 'Menyimpan...' : 'Simpan Transaksi'}
               </button>
             </div>
           </div>
@@ -707,11 +582,7 @@ export default function POSPage() {
               <p className="text-gray-600">
                 Invoice: <span className="font-mono font-semibold">{lastReceipt.invoiceNumber}</span>
               </p>
-              <span
-                className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-medium ${PAYMENT_STATUS_BADGES[lastReceipt.paymentStatus]}`}
-              >
-                {PAYMENT_STATUS_LABELS[lastReceipt.paymentStatus]}
-              </span>
+              <p className="text-sm text-gray-600 mt-1">{lastReceipt.customerName}</p>
             </div>
 
             <div className="border-t border-b py-4 mb-4 space-y-2">
@@ -731,26 +602,8 @@ export default function POSPage() {
                 <span className="font-bold">{formatCurrency(lastReceipt.total)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Dibayar:</span>
-                <span>{formatCurrency(lastReceipt.amountPaid)}</span>
-              </div>
-              {lastReceipt.change > 0 && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Kembalian:</span>
-                  <span className="font-bold text-green-600">{formatCurrency(lastReceipt.change)}</span>
-                </div>
-              )}
-              {lastReceipt.total - lastReceipt.amountPaid > 0 && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Sisa Tagihan:</span>
-                  <span className="font-bold text-red-600">
-                    {formatCurrency(lastReceipt.total - lastReceipt.amountPaid)}
-                  </span>
-                </div>
-              )}
-              <div className="flex justify-between">
-                <span className="text-gray-600">Pengiriman:</span>
-                <span>{lastReceipt.needsDelivery ? 'Masuk antrian kirim' : 'Ambil sendiri'}</span>
+                <span className="text-gray-600">Pembayaran:</span>
+                <span>Ditagih saat pengiriman</span>
               </div>
             </div>
 

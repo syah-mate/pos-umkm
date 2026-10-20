@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import PaymentModal from '@/components/PaymentModal';
 import {
   DELIVERY_STATUS_BADGES,
   DELIVERY_STATUS_LABELS,
@@ -57,7 +56,6 @@ export default function TransactionsPage() {
   const [endDate, setEndDate] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('');
   const [paymentStatus, setPaymentStatus] = useState('');
-  const [paying, setPaying] = useState<Transaction | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
@@ -373,14 +371,6 @@ export default function TransactionsPage() {
                       >
                         Detail
                       </button>
-                      {getRemaining(transaction) > 0 && (
-                        <button
-                          onClick={() => setPaying(transaction)}
-                          className="px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium"
-                        >
-                          Bayar
-                        </button>
-                      )}
                     </div>
                   </td>
                 </tr>
@@ -554,17 +544,6 @@ export default function TransactionsPage() {
             </div>
           </div>
         </div>
-      )}
-
-      {paying && (
-        <PaymentModal
-          transaction={paying}
-          onClose={() => setPaying(null)}
-          onSaved={() => {
-            setPaying(null);
-            loadTransactions();
-          }}
-        />
       )}
     </div>
   );

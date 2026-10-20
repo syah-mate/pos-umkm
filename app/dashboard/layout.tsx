@@ -33,7 +33,8 @@ const menuGroups: { title?: string; items: MenuItem[] }[] = [
     items: [
       { name: 'Kasir', icon: '🛒', path: '/dashboard/pos' },
       { name: 'Riwayat Transaksi', icon: '🧾', path: '/dashboard/transactions' },
-      { name: 'Plan Pengiriman', icon: '🗺️', path: '/dashboard/deliveries' },
+      { name: 'Pengiriman', icon: '🗺️', path: '/dashboard/deliveries' },
+      { name: 'Rekap', icon: '📑', path: '/dashboard/deliveries/recap' },
       { name: 'Purchase Orders', icon: '📋', path: '/dashboard/inventory' },
       { name: 'Stok Opname', icon: '📝', path: '/dashboard/inventory/stock-opname' },
     ],

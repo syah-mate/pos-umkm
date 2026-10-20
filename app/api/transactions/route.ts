@@ -120,14 +120,15 @@ export async function POST(request: NextRequest) {
     });
     const invoiceNumber = `INV-${dateStr}-${String(count + 1).padStart(4, '0')}`;
 
+    // Kasir hanya menyimpan transaksi; pembayaran hanya dicatat saat pengiriman
     const total = Number(body.total) || 0;
-    const amountPaid = Math.min(Math.max(Number(body.amountPaid ?? total) || 0, 0), total);
+    const amountPaid = 0;
     const paymentStatus = computePaymentStatus(total, amountPaid);
 
-    // Transaksi hutang / bayar sebagian wajib punya pelanggan agar bisa ditagih
-    if (paymentStatus !== 'paid' && !body.customer) {
+    // Pelanggan wajib agar transaksi bisa dikirim & ditagih
+    if (!body.customer) {
       return NextResponse.json(
-        { error: 'Transaksi belum lunas wajib memilih pelanggan' },
+        { error: 'Transaksi wajib memilih pelanggan' },
         { status: 400 }
       );
     }
@@ -147,9 +148,10 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
-      // Snapshot tipe ukuran & satuan untuk perhitungan muatan dan surat jalan
+      // Snapshot tipe ukuran, satuan & HPP untuk muatan, surat jalan dan laporan laba
       item.sizeType = product.sizeType || 'kecil';
       item.unit = product.unit;
+      item.cost = product.cost || 0;
     }
 
     // Deduct stock (already validated above)
@@ -179,18 +181,13 @@ export async function POST(request: NextRequest) {
     const transaction = await Transaction.create({
       ...body,
       invoiceNumber,
+      paymentMethod: 'cash',
       paymentStatus,
       amountPaid,
-      payments: amountPaid > 0
-        ? [{
-            amount: amountPaid,
-            method: body.paymentMethod,
-            date: new Date(),
-            notes: paymentStatus === 'paid' ? 'Pembayaran lunas di kasir' : 'DP di kasir',
-            receivedByName: body.cashierName,
-          }]
-        : [],
-      deliveryStatus: body.needsDelivery === false ? 'not_required' : 'pending',
+      cashReceived: 0,
+      change: 0,
+      payments: [],
+      deliveryStatus: 'pending',
       customerPhone: customerDoc?.phone,
       customerAddress: customerDoc?.address,
       isSynced: true,

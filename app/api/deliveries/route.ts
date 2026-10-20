@@ -11,19 +11,18 @@ import {
   validateDeliveryTransactions,
 } from '@/lib/deliveryService';
 
-// GET all delivery plans
+// GET all deliveries
 export async function GET(request: NextRequest) {
   try {
     await dbConnect();
     if (!getAuthUser(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const searchParams = request.nextUrl.searchParams;
-    const status = searchParams.get('status');
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
+    const limit = Math.min(Number(searchParams.get('limit')) || 200, 1000);
 
     const query: any = {};
-    if (status) query.status = { $in: status.split(',') };
     if (startDate && endDate) {
       const start = new Date(startDate);
       start.setHours(0, 0, 0, 0);
@@ -36,7 +35,7 @@ export async function GET(request: NextRequest) {
       .populate('transactions', TRANSACTION_FIELDS)
       .populate('vehicle', 'name plateNumber capacity')
       .sort({ date: -1, createdAt: -1 })
-      .limit(200);
+      .limit(limit);
 
     return NextResponse.json({ data: deliveries.map(summarizeDelivery) }, { status: 200 });
   } catch (error: any) {
@@ -45,7 +44,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST create delivery plan
+// POST create delivery record
 export async function POST(request: NextRequest) {
   try {
     await dbConnect();
@@ -83,12 +82,12 @@ export async function POST(request: NextRequest) {
 
     await Transaction.updateMany(
       { _id: { $in: transactionIds } },
-      { deliveryStatus: 'scheduled', delivery: delivery._id }
+      { deliveryStatus: 'delivered', delivery: delivery._id }
     );
 
-    return NextResponse.json({ message: 'Plan pengiriman berhasil dibuat', delivery }, { status: 201 });
+    return NextResponse.json({ message: 'Pengiriman berhasil dicatat', delivery }, { status: 201 });
   } catch (error: any) {
     console.error('Create delivery error:', error);
-    return NextResponse.json({ error: 'Gagal membuat plan pengiriman' }, { status: 500 });
+    return NextResponse.json({ error: 'Gagal mencatat pengiriman' }, { status: 500 });
   }
 }

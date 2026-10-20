@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import type { DeliveryProfitReport } from '@/lib/deliveryReport';
 
 interface DailyReport {
   totalSales: number;
@@ -26,6 +28,8 @@ export default function ReportsPage() {
   );
   const [dailyReport, setDailyReport] = useState<DailyReport | null>(null);
   const [inventoryReport, setInventoryReport] = useState<any>(null);
+  const [deliveryReport, setDeliveryReport] = useState<DeliveryProfitReport | null>(null);
+  const [downloading, setDownloading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'daily' | 'inventory'>('daily');
 
@@ -47,6 +51,15 @@ export default function ReportsPage() {
         setDailyReport(data.data);
       }
 
+      // Load laba pengiriman harian
+      const deliveryRes = await fetch(`/api/reports/deliveries?date=${selectedDate}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (deliveryRes.ok) {
+        const data = await deliveryRes.json();
+        setDeliveryReport(data.data);
+      }
+
       // Load inventory report
       const inventoryRes = await fetch('/api/reports/inventory', {
         headers: { Authorization: `Bearer ${token}` },
@@ -59,6 +72,35 @@ export default function ReportsPage() {
       console.error('Error loading reports:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const downloadDeliveryExcel = async () => {
+    try {
+      setDownloading(true);
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/reports/deliveries?date=${selectedDate}&format=xlsx`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `laporan-pengiriman-${selectedDate}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } else {
+        alert('Gagal mengunduh laporan');
+      }
+    } catch (error) {
+      console.error('Error downloading delivery report:', error);
+      alert('Terjadi kesalahan');
+    } finally {
+      setDownloading(false);
     }
   };
 
@@ -115,6 +157,123 @@ export default function ReportsPage() {
               className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400"
             />
           </div>
+
+          {/* Laba Pengiriman */}
+          {deliveryReport && (
+            <div className="bg-white rounded-xl shadow-md p-6 mb-6">
+              <div className="flex flex-wrap justify-between items-center gap-3 mb-4">
+                <div>
+                  <h3 className="text-lg font-bold text-gray-800">Laba Pengiriman</h3>
+                  <p className="text-sm text-gray-600">
+                    {new Date(`${selectedDate}T00:00:00`).toLocaleDateString('id-ID', {
+                      weekday: 'long',
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric',
+                    })}{' '}
+                    · {deliveryReport.totals.deliveryCount} pengiriman · {deliveryReport.totals.transactionCount} transaksi
+                  </p>
+                </div>
+                <button
+                  onClick={downloadDeliveryExcel}
+                  disabled={downloading}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium disabled:opacity-60 focus:ring-4 focus:ring-green-400/50 focus:outline-none"
+                >
+                  {downloading ? 'Mengunduh...' : '⬇️ Download Excel'}
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="text-xs text-gray-600">Pendapatan</p>
+                  <p className="text-lg font-bold text-gray-900">{formatCurrency(deliveryReport.totals.revenue)}</p>
+                </div>
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="text-xs text-gray-600">HPP</p>
+                  <p className="text-lg font-bold text-gray-900">{formatCurrency(deliveryReport.totals.hpp)}</p>
+                </div>
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="text-xs text-gray-600">Pengeluaran</p>
+                  <p className="text-lg font-bold text-orange-600">{formatCurrency(deliveryReport.totals.expenses)}</p>
+                </div>
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="text-xs text-gray-600">Keuntungan</p>
+                  <p className={`text-lg font-bold ${deliveryReport.totals.profit < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                    {formatCurrency(deliveryReport.totals.profit)}
+                  </p>
+                </div>
+              </div>
+
+              {deliveryReport.deliveries.length === 0 ? (
+                <p className="text-center py-6 text-gray-500">Tidak ada pengiriman pada tanggal ini</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50 border-b">
+                      <tr>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Pengiriman</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Kendaraan</th>
+                        <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase">Transaksi</th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Pendapatan</th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">HPP</th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Pengeluaran</th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Keuntungan</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {deliveryReport.deliveries.map((d) => (
+                        <tr key={d._id} className="hover:bg-gray-50">
+                          <td className="px-3 py-2">
+                            <Link
+                              href={`/dashboard/deliveries/${d._id}`}
+                              className="font-mono font-semibold text-amber-700 hover:underline"
+                            >
+                              {d.deliveryNumber}
+                            </Link>
+                            <div className="text-xs text-gray-600">{d.name}</div>
+                          </td>
+                          <td className="px-3 py-2">
+                            <div className="font-medium text-gray-900">{d.vehicleName}</div>
+                            <div className="text-xs text-gray-600">
+                              {d.plateNumber ? `${d.plateNumber} · ` : ''}
+                              {d.driverName}
+                            </div>
+                          </td>
+                          <td className="px-3 py-2 text-center">{d.transactionCount}</td>
+                          <td className="px-3 py-2 text-right whitespace-nowrap">{formatCurrency(d.revenue)}</td>
+                          <td className="px-3 py-2 text-right whitespace-nowrap">{formatCurrency(d.hpp)}</td>
+                          <td className="px-3 py-2 text-right whitespace-nowrap text-orange-600">{formatCurrency(d.expenses)}</td>
+                          <td
+                            className={`px-3 py-2 text-right whitespace-nowrap font-bold ${d.profit < 0 ? 'text-red-600' : 'text-green-600'}`}
+                          >
+                            {formatCurrency(d.profit)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot className="border-t-2 font-bold">
+                      <tr>
+                        <td className="px-3 py-2" colSpan={2}>
+                          Total
+                        </td>
+                        <td className="px-3 py-2 text-center">{deliveryReport.totals.transactionCount}</td>
+                        <td className="px-3 py-2 text-right whitespace-nowrap">{formatCurrency(deliveryReport.totals.revenue)}</td>
+                        <td className="px-3 py-2 text-right whitespace-nowrap">{formatCurrency(deliveryReport.totals.hpp)}</td>
+                        <td className="px-3 py-2 text-right whitespace-nowrap text-orange-600">
+                          {formatCurrency(deliveryReport.totals.expenses)}
+                        </td>
+                        <td
+                          className={`px-3 py-2 text-right whitespace-nowrap ${deliveryReport.totals.profit < 0 ? 'text-red-600' : 'text-green-600'}`}
+                        >
+                          {formatCurrency(deliveryReport.totals.profit)}
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">

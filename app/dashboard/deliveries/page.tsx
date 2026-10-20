@@ -4,12 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import DeliveryFormModal from '@/components/DeliveryFormModal';
 import ExpenseModal, { DeliveryExpense } from '@/components/ExpenseModal';
-import {
-  DELIVERY_PLAN_STATUS_BADGES,
-  DELIVERY_PLAN_STATUS_LABELS,
-  Load,
-  formatCurrency,
-} from '@/lib/distribution';
+import { Load, formatCurrency } from '@/lib/distribution';
 
 interface DeliverySummary {
   transactionCount: number;
@@ -30,35 +25,25 @@ interface Delivery {
   vehicleName: string;
   plateNumber?: string;
   driverName: string;
-  status: string;
   expenses: DeliveryExpense[];
   summary: DeliverySummary;
 }
 
-const STATUS_FILTERS = [
-  { value: 'planned,on_delivery', label: 'Aktif' },
-  { value: 'completed', label: 'Selesai' },
-  { value: 'cancelled', label: 'Dibatalkan' },
-  { value: '', label: 'Semua' },
-];
-
 export default function DeliveriesPage() {
   const [deliveries, setDeliveries] = useState<Delivery[]>([]);
   const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState('planned,on_delivery');
   const [showForm, setShowForm] = useState(false);
   const [expenseFor, setExpenseFor] = useState<Delivery | null>(null);
 
   useEffect(() => {
     loadDeliveries();
-  }, [statusFilter]);
+  }, []);
 
   const loadDeliveries = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const url = statusFilter ? `/api/deliveries?status=${statusFilter}` : '/api/deliveries';
-      const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+      const response = await fetch('/api/deliveries', { headers: { Authorization: `Bearer ${token}` } });
       if (response.ok) {
         const data = await response.json();
         const list: Delivery[] = data.data || [];
@@ -97,7 +82,7 @@ export default function DeliveriesPage() {
           onClick={() => setShowForm(true)}
           className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium whitespace-nowrap focus:ring-4 focus:ring-amber-400/50 focus:outline-none"
         >
-          + Buat Plan Pengiriman
+          + Catat Pengiriman
         </button>
       </div>
 
@@ -122,20 +107,6 @@ export default function DeliveriesPage() {
         </div>
       </div>
 
-      <div className="flex gap-2 mb-4">
-        {STATUS_FILTERS.map((f) => (
-          <button
-            key={f.value}
-            onClick={() => setStatusFilter(f.value)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium focus:ring-4 focus:ring-amber-400/50 focus:outline-none ${
-              statusFilter === f.value ? 'bg-amber-600 text-white' : 'bg-gray-200 text-gray-900 hover:bg-gray-300'
-            }`}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
-
       <div className="bg-white rounded-xl shadow-md overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -146,7 +117,6 @@ export default function DeliveriesPage() {
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Transaksi</th>
                 <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Nilai / Sisa</th>
                 <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Pengeluaran</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th>
               </tr>
             </thead>
@@ -186,11 +156,6 @@ export default function DeliveriesPage() {
                       {formatCurrency(d.summary.totalExpenses)}
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${DELIVERY_PLAN_STATUS_BADGES[d.status]}`}>
-                        {DELIVERY_PLAN_STATUS_LABELS[d.status]}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1.5">
                         <Link
                           href={`/dashboard/deliveries/${d._id}`}
@@ -200,14 +165,12 @@ export default function DeliveriesPage() {
                         </Link>
                         <button
                           onClick={() => setExpenseFor(d)}
-                          disabled={d.status === 'cancelled'}
                           className="px-2.5 py-1 bg-orange-500 text-white rounded-lg hover:bg-orange-600 text-xs font-medium disabled:opacity-40"
                         >
                           Klaim Pengeluaran
                         </button>
                         <button
                           onClick={() => printSuratJalan(d._id)}
-                          disabled={d.status === 'cancelled'}
                           className="px-2.5 py-1 bg-gray-700 text-white rounded-lg hover:bg-gray-800 text-xs font-medium disabled:opacity-40"
                         >
                           🖨️ Surat Jalan
@@ -223,7 +186,7 @@ export default function DeliveriesPage() {
           {!loading && deliveries.length === 0 && (
             <div className="text-center py-12 text-gray-500">
               <span className="text-6xl mb-4 block">🚚</span>
-              <p>Belum ada plan pengiriman</p>
+              <p>Belum ada pengiriman</p>
             </div>
           )}
         </div>

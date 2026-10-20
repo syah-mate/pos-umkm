@@ -24,6 +24,14 @@ export async function POST(
     const transaction = await Transaction.findById(id);
     if (!transaction) return NextResponse.json({ error: 'Transaksi tidak ditemukan' }, { status: 404 });
 
+    // Pembayaran hanya bisa dicatat dari plan pengiriman transaksi tersebut
+    if (!body.deliveryId || String(transaction.delivery) !== String(body.deliveryId)) {
+      return NextResponse.json(
+        { error: 'Pembayaran hanya dapat dicatat saat pengiriman' },
+        { status: 400 }
+      );
+    }
+
     const paidSoFar = getAmountPaid(transaction);
     const remaining = transaction.total - paidSoFar;
     if (remaining <= 0) {
@@ -42,7 +50,7 @@ export async function POST(
       date: new Date(),
       notes: body.notes,
       receivedByName: user.name,
-      delivery: body.deliveryId || undefined,
+      delivery: body.deliveryId,
     });
     transaction.amountPaid = paidSoFar + amount;
     transaction.paymentStatus = computePaymentStatus(transaction.total, transaction.amountPaid);

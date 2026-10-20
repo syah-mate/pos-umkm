@@ -38,7 +38,7 @@ export async function GET(
   }
 }
 
-// PUT update delivery plan (hanya saat status 'planned')
+// PUT update delivery record
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -51,16 +51,6 @@ export async function PUT(
     const body = await request.json();
     const delivery = await Delivery.findById(id);
     if (!delivery) return NextResponse.json({ error: 'Pengiriman tidak ditemukan' }, { status: 404 });
-
-    if (delivery.status !== 'planned') {
-      // Setelah berangkat hanya catatan yang boleh diubah
-      if (body.notes !== undefined) {
-        delivery.notes = body.notes;
-        await delivery.save();
-        return NextResponse.json({ message: 'Catatan berhasil diupdate', delivery }, { status: 200 });
-      }
-      return NextResponse.json({ error: 'Pengiriman yang sudah berangkat tidak bisa diubah' }, { status: 400 });
-    }
 
     const vehicleId = body.vehicle || String(delivery.vehicle);
     const vehicle = await Vehicle.findById(vehicleId);
@@ -97,18 +87,18 @@ export async function PUT(
     if (added.length > 0) {
       await Transaction.updateMany(
         { _id: { $in: added } },
-        { deliveryStatus: 'scheduled', delivery: delivery._id }
+        { deliveryStatus: 'delivered', delivery: delivery._id }
       );
     }
 
-    return NextResponse.json({ message: 'Plan pengiriman berhasil diupdate', delivery }, { status: 200 });
+    return NextResponse.json({ message: 'Pengiriman berhasil diupdate', delivery }, { status: 200 });
   } catch (error: any) {
     console.error('Update delivery error:', error);
     return NextResponse.json({ error: 'Gagal mengupdate pengiriman' }, { status: 500 });
   }
 }
 
-// DELETE cancel delivery plan (hanya saat status 'planned'); transaksi dikembalikan ke antrian
+// DELETE hapus catatan pengiriman; transaksi dikembalikan ke antrian kirim
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -120,21 +110,25 @@ export async function DELETE(
 
     const delivery = await Delivery.findById(id);
     if (!delivery) return NextResponse.json({ error: 'Pengiriman tidak ditemukan' }, { status: 404 });
-    if (delivery.status !== 'planned') {
-      return NextResponse.json({ error: 'Hanya pengiriman berstatus direncanakan yang bisa dibatalkan' }, { status: 400 });
+    // Pembayaran yang dicatat lewat pengiriman ini harus dihapus dulu agar setoran tidak hilang jejaknya
+    const hasPayments = await Transaction.exists({ 'payments.delivery': delivery._id });
+    if (hasPayments) {
+      return NextResponse.json(
+        { error: 'Pengiriman ini sudah punya pembayaran tercatat, tidak bisa dihapus' },
+        { status: 400 }
+      );
     }
-
-    delivery.status = 'cancelled';
-    await delivery.save();
 
     await Transaction.updateMany(
       { _id: { $in: delivery.transactions }, delivery: delivery._id },
       { deliveryStatus: 'pending', $unset: { delivery: 1 } }
     );
 
-    return NextResponse.json({ message: 'Pengiriman dibatalkan' }, { status: 200 });
+    await delivery.deleteOne();
+
+    return NextResponse.json({ message: 'Pengiriman dihapus' }, { status: 200 });
   } catch (error: any) {
-    console.error('Cancel delivery error:', error);
-    return NextResponse.json({ error: 'Gagal membatalkan pengiriman' }, { status: 500 });
+    console.error('Delete delivery error:', error);
+    return NextResponse.json({ error: 'Gagal menghapus pengiriman' }, { status: 500 });
   }
 }

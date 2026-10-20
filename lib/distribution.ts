@@ -36,34 +36,22 @@ export const PAYMENT_STATUS_BADGES: Record<string, string> = {
   failed: 'bg-gray-100 text-gray-700',
 };
 
+// Transaksi yang sudah masuk catatan pengiriman dianggap terkirim
+// (scheduled / on_delivery hanya ada di data lama)
 export const DELIVERY_STATUS_LABELS: Record<string, string> = {
-  pending: 'Belum Dijadwalkan',
-  scheduled: 'Dijadwalkan',
-  on_delivery: 'Dalam Pengiriman',
+  pending: 'Belum Dikirim',
+  scheduled: 'Terkirim',
+  on_delivery: 'Terkirim',
   delivered: 'Terkirim',
   not_required: 'Ambil Sendiri',
 };
 
 export const DELIVERY_STATUS_BADGES: Record<string, string> = {
   pending: 'bg-gray-100 text-gray-700',
-  scheduled: 'bg-blue-100 text-blue-700',
-  on_delivery: 'bg-indigo-100 text-indigo-700',
+  scheduled: 'bg-green-100 text-green-700',
+  on_delivery: 'bg-green-100 text-green-700',
   delivered: 'bg-green-100 text-green-700',
   not_required: 'bg-stone-100 text-stone-700',
-};
-
-export const DELIVERY_PLAN_STATUS_LABELS: Record<string, string> = {
-  planned: 'Direncanakan',
-  on_delivery: 'Dalam Perjalanan',
-  completed: 'Selesai',
-  cancelled: 'Dibatalkan',
-};
-
-export const DELIVERY_PLAN_STATUS_BADGES: Record<string, string> = {
-  planned: 'bg-blue-100 text-blue-700',
-  on_delivery: 'bg-indigo-100 text-indigo-700',
-  completed: 'bg-green-100 text-green-700',
-  cancelled: 'bg-gray-200 text-gray-600',
 };
 
 export const EXPENSE_CATEGORIES = ['bensin', 'tol', 'parkir', 'makan', 'bongkar muat', 'lainnya'];

@@ -226,7 +226,7 @@ async function seedTransactions(users, prod, customers) {
   return transactions;
 }
 
-// Pengiriman: hari 6-3 sudah selesai (sebagian ditagih driver), hari 2-1 direncanakan, hari ini masih antrian
+// Pengiriman: hari 6-3 sudah ditagih driver, hari 2-1 belum ditagih, hari ini masih antrian
 async function seedDeliveries(admin, vehicles, transactions) {
   const [truck, pickup] = vehicles;
   const toShip = (from, to) =>
@@ -236,8 +236,8 @@ async function seedDeliveries(admin, vehicles, transactions) {
     });
 
   const plans = [
-    { name: 'Pengiriman A - Rute Depok', vehicle: truck, day: 3, txs: toShip(6, 3), status: 'completed' },
-    { name: 'Pengiriman B - Rute Cibinong', vehicle: pickup, day: -1, txs: toShip(2, 1), status: 'planned' },
+    { name: 'Pengiriman A - Rute Depok', vehicle: truck, day: 3, txs: toShip(6, 3), collect: true },
+    { name: 'Pengiriman B - Rute Cibinong', vehicle: pickup, day: -1, txs: toShip(2, 1), collect: false },
   ];
 
   const deliveries = [];
@@ -248,9 +248,9 @@ async function seedDeliveries(admin, vehicles, transactions) {
 
     for (const t of plan.txs) {
       t.delivery = deliveryId;
-      t.deliveryStatus = plan.status === 'completed' ? 'delivered' : 'scheduled';
+      t.deliveryStatus = 'delivered';
       // Driver menagih sebagian besar sisa tagihan saat pengiriman selesai
-      if (plan.status === 'completed' && t.amountPaid < t.total && rand() < 0.75) {
+      if (plan.collect && t.amountPaid < t.total && rand() < 0.75) {
         const remaining = t.total - t.amountPaid;
         const amount = rand() < 0.8 ? remaining : Math.round(remaining / 2000) * 1000;
         t.payments.push({
@@ -267,17 +267,14 @@ async function seedDeliveries(admin, vehicles, transactions) {
       vehicle: plan.vehicle._id, vehicleName: plan.vehicle.name, plateNumber: plan.vehicle.plateNumber,
       driverName: plan.vehicle.driverName,
       transactions: plan.txs.map((t) => t._id),
-      expenses: plan.status === 'completed'
+      expenses: plan.collect
         ? [
             { _id: new mongoose.Types.ObjectId(), category: 'bensin', description: 'Solar', amount: 250000, date, createdByName: admin.name },
             { _id: new mongoose.Types.ObjectId(), category: 'tol', amount: 46000, date, createdByName: admin.name },
             { _id: new mongoose.Types.ObjectId(), category: 'makan', description: 'Makan siang driver & kenek', amount: 60000, date, createdByName: admin.name },
           ]
         : [],
-      status: plan.status,
       createdBy: admin._id, createdByName: admin.name,
-      departedAt: plan.status === 'completed' ? daysAgo(plan.day, 8, 0) : undefined,
-      completedAt: plan.status === 'completed' ? daysAgo(plan.day, 17, 0) : undefined,
       createdAt: daysAgo(plan.day + 1, 17, 0), updatedAt: date,
     });
   }

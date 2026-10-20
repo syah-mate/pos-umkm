@@ -284,7 +284,7 @@ export default function VehiclesPage() {
                   ))}
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  Dipakai untuk mengecek apakah transaksi di plan pengiriman muat di kendaraan ini.
+                  Dipakai untuk mengecek apakah transaksi di pengiriman muat di kendaraan ini.
                 </p>
               </div>
 

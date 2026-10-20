@@ -9,6 +9,7 @@ export interface ITransactionItem {
   subtotal: number;
   sizeType?: 'besar' | 'medium' | 'kecil';
   unit?: string;
+  cost?: number;
   notes?: string;
 }
 
@@ -86,6 +87,11 @@ const TransactionItemSchema = new Schema<ITransactionItem>({
   },
   unit: {
     type: String,
+  },
+  // Snapshot harga modal (HPP per unit) saat transaksi dibuat
+  cost: {
+    type: Number,
+    min: 0,
   },
   notes: {
     type: String,

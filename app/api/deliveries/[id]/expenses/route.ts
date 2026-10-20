@@ -22,9 +22,6 @@ export async function POST(
 
     const delivery = await Delivery.findById(id);
     if (!delivery) return NextResponse.json({ error: 'Pengiriman tidak ditemukan' }, { status: 404 });
-    if (delivery.status === 'cancelled') {
-      return NextResponse.json({ error: 'Pengiriman sudah dibatalkan' }, { status: 400 });
-    }
 
     delivery.expenses.push({
       category: body.category,

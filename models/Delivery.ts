@@ -21,12 +21,9 @@ export interface IDelivery extends Document {
   driverName: string;
   transactions: mongoose.Types.ObjectId[];
   expenses: IDeliveryExpense[];
-  status: 'planned' | 'on_delivery' | 'completed' | 'cancelled';
   notes?: string;
   createdBy?: mongoose.Types.ObjectId;
   createdByName?: string;
-  departedAt?: Date;
-  completedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -94,11 +91,6 @@ const DeliverySchema = new Schema<IDelivery>(
       },
     ],
     expenses: [DeliveryExpenseSchema],
-    status: {
-      type: String,
-      enum: ['planned', 'on_delivery', 'completed', 'cancelled'],
-      default: 'planned',
-    },
     notes: {
       type: String,
       trim: true,
@@ -110,12 +102,6 @@ const DeliverySchema = new Schema<IDelivery>(
     createdByName: {
       type: String,
     },
-    departedAt: {
-      type: Date,
-    },
-    completedAt: {
-      type: Date,
-    },
   },
   {
     timestamps: true,
@@ -123,7 +109,6 @@ const DeliverySchema = new Schema<IDelivery>(
 );
 
 DeliverySchema.index({ date: -1 });
-DeliverySchema.index({ status: 1 });
 
 const Delivery: Model<IDelivery> =
   mongoose.models.Delivery || mongoose.model<IDelivery>('Delivery', DeliverySchema);
